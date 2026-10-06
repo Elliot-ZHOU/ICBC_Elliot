@@ -26,3 +26,10 @@ cd ai-chain && python3 scripts/seed.py && python3 server/app.py
 ```
 
 Then open http://127.0.0.1:8787/ (homepage). Cube: http://127.0.0.1:8787/cube
+
+On first launch after a clone, the launcher builds the BICS member DB (`class-3-coords/BICS-Classification/bics_entities_20261003.db`, not tracked) from `DATA-SPACE/` xlsx, installing `openpyxl` if needed, and rebuilds it whenever an xlsx is newer. Without that DB the homepage shows sectors with 0 companies. Without the launcher (e.g. Windows), run once from the repo root, then restart the server:
+
+```bash
+python3 -m pip install openpyxl
+python3 class-3-coords/BICS-Classification/ingest_20261003_entities.py
+```

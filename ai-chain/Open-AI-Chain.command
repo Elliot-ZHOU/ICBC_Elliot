@@ -33,6 +33,34 @@ if lsof -ti ":$PORT" >/dev/null 2>&1; then
   sleep 0.4
 fi
 
+# Homepage company lists read the BICS member DB. It is gitignored and built
+# from DATA-SPACE xlsx, so a fresh clone has none; rebuild when xlsx is newer.
+BICS_DIR="$ROOT/../class-3-coords/BICS-Classification"
+ENTITIES_DB="$BICS_DIR/bics_entities_20261003.db"
+DATA_SPACE="$ROOT/../DATA-SPACE"
+needs_ingest=0
+if [[ ! -f "$ENTITIES_DB" ]]; then
+  needs_ingest=1
+elif [[ -d "$DATA_SPACE" ]] && [[ -n "$(find "$DATA_SPACE" -name '*.xlsx' ! -name '~$*' -newer "$ENTITIES_DB" -print -quit)" ]]; then
+  needs_ingest=1
+fi
+if (( needs_ingest )); then
+  if ! python3 -c "import openpyxl" 2>/dev/null; then
+    echo "[ai-chain] installing openpyxl (one-time, reads DATA-SPACE xlsx)…"
+    python3 -m pip install --user --quiet openpyxl 2>/dev/null \
+      || python3 -m pip install --quiet openpyxl 2>/dev/null \
+      || true
+  fi
+  if python3 -c "import openpyxl" 2>/dev/null; then
+    echo "[ai-chain] building BICS member DB from DATA-SPACE (first run may take a minute)…"
+    python3 "$BICS_DIR/ingest_20261003_entities.py" \
+      || echo "[ai-chain] WARNING: ingest failed — homepage company counts will be 0" >&2
+  else
+    echo "[ai-chain] WARNING: openpyxl unavailable — homepage company counts will be 0" >&2
+    echo "[ai-chain]   fix: python3 -m pip install openpyxl   then relaunch" >&2
+  fi
+fi
+
 python3 "$ROOT/scripts/seed.py"
 echo "[ai-chain] starting server…"
 python3 "$ROOT/server/app.py" &

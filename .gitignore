@@ -1,0 +1,10 @@
+# Local SQLite built by scripts (rebuild, do not commit)
+ai-chain/data/ai_chain.db
+class-3-coords/BICS-Classification/bics_entities_20261003.db
+class-3-coords/BICS-Classification/bics_entities_20261003.db.tmp
+
+# Office lock files
+~$*.xlsx
+
+.DS_Store
+__pycache__/
