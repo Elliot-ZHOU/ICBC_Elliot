@@ -1,0 +1,30 @@
+# worklog-003 — GOOGL / AI Chain Cube / FIDV
+更新：2026-10-04 · 账号 GitHub `Franzpur` · 接续 worklog-002（满 10000 字开册）
+
+格式：`U=`用户简令 · `A=`我方简应 · 够后续接续即可。流水序号全库连续。
+
+---
+
+## 1. 对话流水（压缩）
+
+| # | U | A |
+|---|---|---|
+|90| 改了一下书记写的工程史 html，帮我上传到 GitHub。 | 任务：上传业主改过的 FIDV-engineering-history-report.html。业主改标题：读本；§1 产品概述；§2 三条设计理念；§10 未完成。主代理 commit 并 push origin/main（含本条）。无总监。无总参谋部。无其它子代理。 |
+|91| 电总参谋部：信息部 Staples 四类指令表不错；试写扒后三类的表；或需 BQL、与前四类大不相同；找一行业试。 | 总参谋部调度信息部 manage+request。试拉 Technology→Communications Equipment（19101010，577 ticker）。父代理落盘 pull-comms-eq-l5l7.xlsx：A–F 锁身份；G/I/K 同 _xll.BQL 外壳，mnemonic 空在 CONFIG（BQLX 无 L5–L7 字段名，上报业主上机 FLDS 填）；一企一行不用 segments。不改摄入/门厅。无总监（无立方体代码）。 |
+|92| 电总参谋部：把 DATA-SPACE/ICBC C/20261005 Staples L4 xlsx 摄入工程。 | 总参谋部+信息部本轮已先跑。主代理改 ingest_20261003_entities.py：双 SRC 20261003+20261005；跳过旧 L1 BICS_Comsumer Staples、pull-*、fomular、~$；不跳过 Other Wholesalers - Staples.xlsx。20261005 L4 取文件名（Agricultural & Producers→Agricultural Producers 12101010）；L2/L3 自 2024 JSON 祖先；l1 Consumer Staples。摄入 117255 行 reject 26、225 L4；14 份 Staples L4 全留（7356 行 reject 0）。抽检 12101010 1861、Cannabis 244、Other Wholesalers-Staples 47、Mass Merchants 80；WMT 主业 Mass Merchants 81.5%+Food & Drug 18.5%；KO Non-Alcoholic Beverages 12101111 100%。文档 README、INFORMATION.md、INFORMATION-clean.md、CONCEPTS.md。库 bics_entities_20261003.db gitignore。总监通过（第1次，DESIGN 三持，394c8015）。无 push。 |
+|93| 电总参谋部：20261003 加入 diff.xlsx；各 L1 原公司数 vs 工程公司数差为何这么大；先前合并跨大类至于减少这么多吗；Government 都哪去了。通电信息部。 | 总参谋部 c8b1c9ce：只对账不改产品。信息部 cb6ef4d5 manage+clean（Ask 未开表）。父代理抄 diff 并 SQL：In product 与门厅主业 companyCount 一致（Industrials 9569、Government 40）。非 Government Δ≈并入其他主业+空%无主业（Industrials db 16685→stay 9569 merge 3524 no_pri 3592）。全库 unique ticker 98374，有主业 49220，无主业 49154。Government 源表 25000 unique、% Tot Rev 全空、入库 24987、24986 仅 gov 且无主业故不进门厅；diff Real=117982 与源表不符须上报业主。门厅 40 家 Government 中 39 家是 Financials 等 L4 英文名撞 50* 节点。词条 INFORMATION.md / INFORMATION-clean.md。无总监（无产品代码）。无 push。 |
+|94| 电总参谋部：空%tot别删，按原标准加进工程；三类坐标前加负号如 -00-00-00-00-00-00-00，表才完全。 | 总参谋部 a77e7b31：不删库、空≠100；有数字仍赢；空胜出进门厅/名单，企业 legalEntityCoord 加「-」。信息部 9b5e197f 词条。父代理改 app.py `_primary_index`/`_entity_if_primary`；coords.js `displayIndustryCoord` 保留前导负号+四段；cache v=35。不改 ingest。门厅 All 98374；Government 25028 格子 50-00-00-00 无负号。Central Banks：BOT 50-11-12-10 100%；空占比 -50-11-12-10 与 —。WMT 无负号。总监通过第1次 80464871。无 push。 |
+|95| 上传 GitHub 并让书记更新队员工程史。 | 书记改 html+md 读本 §3.11 等；父代理 commit+push origin/main（含本条、20261005 xlsx、diff、pull-comms、Government 去双下划线文件名、产品代码空占比负号坐标、ingest）。无总参谋部。无总监（本回合只发布已审过的代码+读本）。 |
+|96| 书记；library 里给了明天队员会 PDF；结合工程史与 worklog；赋予开关程序权力；截工程图；做可打印简洁演示文稿。 | 读 First product discussion.pdf（6页）。书记提纲 15 页（c35f7e27，当时未写日志）。父代理开 8787 截门厅/名单/立方体（Chrome headless；立方体用 SwiftShader）。落盘 library/FIDV-team-briefing.html + briefing/assets/（5 张 png）。浅纸 A4 横向。不点名分工。末页认领空白。关 8787。无总监（只 library）。无 push。 |
+|97| 电总参谋部：同学 GitHub 下载后首页分类空；为什么；别改代码。 | 总参谋部 ed77f0c6：空盘先查层级 JSON；缺实体库不是空格。信息部 8a81de12 词条。父代理核对 origin/main：JSON 已跟踪 889KB；bics_entities_20261003.db gitignore。格子=GET /api/bics/children←JSON；家数←db。JSON 不在或只拷 ai-chain → children=[] 看起来空。只缺 db → 13 个 L1 格、家数 0、四级名单空。不改代码。无总监。无 push。 |
+|98| 下载后不跑 ingest 是不是连不上数据库？连接是靠 ingest 实现的吗？ | 否。ingest_20261003_entities.py 从 DATA-SPACE xlsx 生成 gitignore 的 bics_entities_20261003.db。app.py 按固定路径打开该文件；文件不在则服务仍跑、格子来自 JSON、家数 0。无总参谋部。无代码改动。无 push。 |
+|99| 电总参谋部；为什么要这么设计（ingest 造库、db gitignore、app 打开文件）。 | 总参谋部 9fe94da1：真源分层。xlsx=成员可对账原表进仓；JSON=BICS 标准进仓供门厅格子；约25MB sqlite=本机生成查询切片 gitignore，避免双真源与二进制噪声（同 #70 ai_chain.db）。ingest 写文件不建连；app 读文件。运行时不现场拆 xlsx。信息部 5f018f38 核词条。不改代码。无总监。无 push。 |
+|100| 书记；解决方案、简要原因和原理写成给队员看的可打印 problem set handbook，简短。 | 落盘 library/FIDV-clone-handbook.html（A4 纵向）：现象两种空、ingest 造库非连库、三层真源、clone 全仓+启动器+ingest 一次。更新 library/README.md。无总参谋部。无总监。无子代理。无 push。 |
+|101| 怎么运行、是否终端输入？本题=有格无公司；删另一题 help；补跑 py 操作指导。 | 改 library/FIDV-clone-handbook.html：只留有格无公司。§4：终端（非浏览器）cd 仓库根、pip3 install openpyxl、python3 …/ingest_20261003_entities.py；quit 后重开 Open-AI-Cube.command。README 一句同步。无总参谋部。无总监。无子代理。无 push。 |
+|102| 重组书记为书记处（平级总参谋部）；下属书记、秘书、运维。书记仍管 library/worklog 且每次最后；秘书仅点名做 PPT/展出；运维记 bug 与解法。开始部门重组。 | 父代理落盘 agents/secretariat.md、clerk.md、operations.md 及 agent_tasklist 对应文件；收窄 secretary 只记 worklog。RULE/GS 硬排除改为总监+书记处。library/ops-log-001.md 记 clone 空名单为运维#1。无总参谋部（未电）。无总监（非产品代码）。无 push。 |
+|103| 整改 library：书记处重组后工作区也重组；下设 bug-report（运维）与 showable-report（秘书）；杂乱文件按需分入；worklog 仍在 library 根下。 | 任务：按书记处三部拆 library 工作区。主代理建 library/bug-report、library/showable-report。移入 ops-log-001.md→bug-report；工程史 html/md、clone-handbook、team-briefing、First product discussion.pdf、briefing/assets→showable-report。worklog-001/002/003 留根下。更新 library 及两子目录 README；RULE/secretary/clerk/operations/secretariat 路径；仓根 README；讲稿与工程史表内当前路径。不改旧 worklog 行。无产品代码。无总参谋部（未电）。无总监（非产品代码）。无秘书/运维子代理（父代理落盘）。本轮书记记账。无 push。 |
+|104| 这些更改都上传到 GitHub。 | 任务：提交并推 origin/main（书记处重组+library 拆目录，含本条）。纳入：agents/与 agent_tasklist 记书处三部；RULE/GS 硬排除扩为总监+记书处；library/bug-report、showable-report；ops-log、讲稿、手册、工程史、队员会 PDF 与配图。无产品代码。无总参谋部（未电）。无总监（非产品代码）。无秘书/运维子代理。本轮书记。 |
+|105| 重组「电」：点名任意 agent；电总参谋部/书记处/总监即召对应角色。 | 任务：电改为点名前缀。主代理 RULE 增「电」节（电+角色名；单独「电」不派）；总参谋部改电总参谋部或报文/报/M/Message。同步 agents 与 agent_tasklist 的 GS、secretariat、总监、clerk、operations、secretary、art、information；仓根 agents/README；INFORMATION.md；工程史 html/md 协作节。无产品代码。无总参谋部（未写电总参谋部）。无总监。无秘书/运维。本轮书记。无 push。 |
+|106| 电秘书：向美工部问纸面美学与设计，写成秘书自己的 skill。 | 任务：秘书进修纸面美学并落 skill。主代理电秘书。美工部 6e79c486：纸面=产品暗底玻璃同族反相，不得把暗底/玻璃/accent 拷到打印纸。父代理落盘 `.cursor/skills/clerk-showable-report/SKILL.md`；agents/clerk.md、agent_tasklist/clerk.md 执行前先读 skill；showable-report README 与 agent_tasklist README 挂链。无产品代码。无总参谋部。无总监。无运维。本轮书记。无 push。 |
+|107| 电秘书：试改工程史.html，看进修如何。 | 任务：按秘书 skill 改 FIDV-engineering-history-report.html。主代理电秘书（Task 仍无 clerk 类型，父代理按 skill 改）。封面独立 FIDV 字标 letter-spacing 0.08em；h1 工程发展史 18pt；--fill；A4 纵向 no-print；§8 书记处。正文未重写。浏览器预览封面。无 ai-chain。无总参谋部。无美工部。无运维。无总监。本轮书记。无 push。落盘 library/showable-report/FIDV-engineering-history-report.html。 |
+|108| 上传到 GitHub。 | 任务：提交并推 origin/main（含本条）。纳入：「电」点名前缀；秘书 skill `.cursor/skills/clerk-showable-report`；工程史 html 封面字标；相关 agents/RULE/README。无产品代码。无总监。无总参谋部。无秘书/运维。本轮书记。 |
