@@ -11,6 +11,10 @@
 
 - [`FIDV-clone-handbook.html`](./FIDV-clone-handbook.html) A4 纵向打印（终端跑 ingest）
 
+子代理使用手册（2026-10-06）：
+
+- [`FIDV-subagent-handbook.html`](./FIDV-subagent-handbook.html) A4 纵向打印；PDF `library/showable-report/FIDV-subagent-handbook.pdf`
+
 队员会讲稿（2026-10-06）：
 
 - [`FIDV-team-briefing.html`](./FIDV-team-briefing.html) A4 横向打印；配图 `briefing/assets/`

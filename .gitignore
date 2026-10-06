@@ -8,3 +8,14 @@ class-3-coords/BICS-Classification/bics_entities_20261003.db.tmp
 
 .DS_Store
 __pycache__/
+
+# Private agent tools (local only, see PUBLIC-PRIVATE.md)
+agents/
+agent_tasklist/*
+!agent_tasklist/DESIGN.md
+!agent_tasklist/AESTHETIC.md
+!agent_tasklist/INFORMATION.md
+.cursor/agents/
+.cursor/skills/
+.cursor/rules/
+progress.md

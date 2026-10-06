@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FIDV 子代理使用手册</title>
+<style>
+  :root {
+    --ink: #1a1f26;
+    --muted: #4a5560;
+    --rule: #c5ccd4;
+    --paper: #f7f5f0;
+    --fill: #ece8e0;
+  }
+  * { box-sizing: border-box; }
+  html { font-size: 11pt; }
+  body {
+    margin: 0 auto;
+    max-width: 180mm;
+    padding: 16mm 16mm 22mm;
+    color: var(--ink);
+    background: var(--paper);
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Songti SC", "Noto Serif SC", serif;
+    line-height: 1.45;
+  }
+  h1 { font-size: 18pt; letter-spacing: 0.04em; margin: 0 0 0.35em; font-weight: 600; }
+  h2 { font-size: 12.5pt; margin: 1.35em 0 0.4em; border-bottom: 1px solid var(--rule); padding-bottom: 0.2em; font-weight: 600; page-break-after: avoid; break-after: avoid; }
+  h3 { font-size: 11pt; margin: 1em 0 0.3em; font-weight: 600; page-break-after: avoid; break-after: avoid; }
+  p, li { margin: 0.32em 0; }
+  .lede { color: var(--muted); font-size: 10pt; }
+  .cover-meta { margin: 0.8em 0 1.4em; font-size: 10pt; color: var(--muted); }
+  .cover-meta div { margin: 0.15em 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 9.5pt; margin: 0.5em 0 0.8em; page-break-inside: avoid; break-inside: avoid; }
+  th, td { border: 1px solid var(--rule); padding: 0.28em 0.45em; text-align: left; vertical-align: top; }
+  th { background: var(--fill); font-weight: 600; }
+  table.kv th { width: 25%; }
+  table.org td { text-align: center; vertical-align: middle; padding: 0.5em 0.45em; }
+  table.org td.gap { border: none; }
+  table.org .sub { display: block; color: var(--muted); font-size: 8.5pt; }
+  table.matrix td, table.matrix th { text-align: center; }
+  table.matrix td:first-child, table.matrix th:first-child { text-align: left; }
+  table.card { font-size: 9pt; }
+  code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.88em; }
+  ul, ol { padding-left: 1.2em; }
+  .note { color: var(--muted); font-size: 9pt; }
+  .role { page-break-inside: avoid; break-inside: avoid; }
+  .keep { page-break-inside: avoid; break-inside: avoid; }
+  .cover { padding-top: 58mm; page-break-after: always; break-after: page; }
+  .cover .mark { font-size: 40pt; letter-spacing: 0.08em; font-weight: 600; margin: 0 0 0.2em; }
+  .cover h1 { font-size: 20pt; }
+  .page { page-break-before: always; break-before: page; }
+  .foot { margin-top: 1.8em; font-size: 9pt; color: var(--muted); }
+  .no-print { margin: 0 0 1em; font-size: 10pt; }
+  @media print {
+    body { max-width: none; padding: 0; background: white; }
+    .no-print { display: none; }
+    a { color: inherit; text-decoration: none; }
+  }
+  @page { size: A4; margin: 14mm 14mm 16mm; }
+</style>
+</head>
+<body>
+  <p class="no-print">浏览器打开本页 → 打印 → A4 纵向 → 存储为 PDF。关掉页眉网址。</p>
+
+  <!-- 封面 -->
+  <section class="cover">
+    <p class="mark">FIDV</p>
+    <h1>子代理使用手册</h1>
+    <p class="lede">八个子代理：怎么叫、各管什么、什么时候派 · 给队员</p>
+    <div class="cover-meta">
+      <div>2026-10-06</div>
+      <div>依据：<code>agents/</code> 八个角色文件、<code>agent_tasklist/</code> 任务真源与 <code>RULE.md</code>。材料没写的，本册写「未提供」。</div>
+    </div>
+  </section>
+
+  <!-- 1 组织总图 -->
+  <h2>1. 组织总图</h2>
+  <p>父代理就是你在 Cursor 对话里直接说话的主代理。子代理都由它派出。总参谋部与书记处平级，互不调度。总监独立在两侧之外，是代码改动的终审。</p>
+  <table class="org">
+    <tr>
+      <td class="gap"></td>
+      <td colspan="3">父代理（主代理）<span class="sub">唯一实际调用 Task 派子代理的一方；写产品代码</span></td>
+      <td class="gap"></td>
+    </tr>
+    <tr>
+      <td colspan="2">总参谋部 <code>general-staff</code><span class="sub">规划；一旦派出须第一个执行</span></td>
+      <td>总监 <code>chief-inspector</code><span class="sub">独立 · 代码改动终审</span></td>
+      <td colspan="2">书记处 <code>secretariat</code><span class="sub">规划；与总参谋部平级</span></td>
+    </tr>
+    <tr>
+      <td>美工部<span class="sub"><code>art-department</code></span></td>
+      <td>信息部<span class="sub"><code>information-department</code></span></td>
+      <td class="gap"></td>
+      <td>书记<span class="sub"><code>secretary</code></span></td>
+      <td>秘书 · 运维<span class="sub"><code>clerk</code> · <code>operations</code></span></td>
+    </tr>
+  </table>
+  <ul>
+    <li>总参谋部可调度美工部、信息部；不调度、不指导、不改写总监与书记处（含书记、秘书、运维）。</li>
+    <li>书记处只调度书记、秘书、运维；不调度总监、总参谋部、美工部、信息部。</li>
+    <li>美工部与信息部同级。书记、秘书、运维同属书记处。</li>
+    <li>角色文件在 <code>agents/</code>，Cursor 从 <code>.cursor/agents/</code> 里的同名链接加载。每个角色在 <code>agent_tasklist/</code> 有一份任务真源。</li>
+  </ul>
+  <table>
+    <tr><th>角色</th><th>角色文件</th><th>任务真源</th><th>只读</th></tr>
+    <tr><td>总参谋部</td><td><code>agents/general-staff.md</code></td><td><code>agent_tasklist/general-staff.md</code></td><td>是</td></tr>
+    <tr><td>美工部</td><td><code>agents/art-department.md</code></td><td><code>AESTHETIC.md</code>；派用步骤 <code>art-department.md</code></td><td>是</td></tr>
+    <tr><td>信息部</td><td><code>agents/information-department.md</code></td><td><code>INFORMATION.md</code> 与三分部；派用 <code>information-department.md</code></td><td>是</td></tr>
+    <tr><td>总监</td><td><code>agents/chief-inspector.md</code></td><td><code>agent_tasklist/DESIGN.md</code></td><td>是</td></tr>
+    <tr><td>书记处</td><td><code>agents/secretariat.md</code></td><td><code>agent_tasklist/secretariat.md</code></td><td>是</td></tr>
+    <tr><td>书记</td><td><code>agents/secretary.md</code></td><td><code>agent_tasklist/secretary.md</code></td><td>否（写 worklog）</td></tr>
+    <tr><td>秘书</td><td><code>agents/clerk.md</code></td><td><code>agent_tasklist/clerk.md</code></td><td>否（写文稿）</td></tr>
+    <tr><td>运维</td><td><code>agents/operations.md</code></td><td><code>agent_tasklist/operations.md</code></td><td>否（写 ops-log）</td></tr>
+  </table>
+  <p class="note">「只读」取自角色文件 frontmatter 的 <code>readonly: true</code>：只读的角色不改仓，方案交父代理落盘。八个角色的 <code>model</code> 均为 <code>inherit</code>。frontmatter 的 <code>description</code> 是 Cursor 自动派用时的触发依据。</p>
+
+  <!-- 2 怎么调用 -->
+  <h2 class="page">2. 怎么调用</h2>
+  <h3>业主在对话里怎么叫</h3>
+  <table class="kv">
+    <tr><th>「电」+ 角色名</th><td>点名任意子代理。角色名可写中文或 <code>agents/</code> 文件名，后面可接任务。例：电总参谋部、电书记处、电总监、电美工部、电信息部、电书记、电秘书、电运维。</td></tr>
+    <tr><th>单独一个「电」</th><td>不派。不要当成总参谋部。</td></tr>
+    <tr><th>「报文」「报」「M」「Message」</th><td>只叫总参谋部。</td></tr>
+    <tr><th>直接说角色名</th><td>如「总参谋部」「书记处」「美工部」「art department」「信息部」「总监」「书记」「秘书」「运维」，也会派出对应角色（各角色呼出词见第 3 节）。</td></tr>
+    <tr><th>不点名</th><td>父代理按规则自动派。例：改完代码必派总监；改启动图标、开屏、logo、全局 CSS、新分页外观之前必派美工部；要文稿先派书记处再派秘书；出 bug 先派书记处再派运维；每次谈话最后派书记。</td></tr>
+    <tr><th>点名后</th><td>仍守该角色自己的职权：电总监仍只审已改完的代码（无 diff 回「无代码改动，不审」）；电书记仍只记 worklog；谈话末项的书记不因是否电过而取消。</td></tr>
+  </table>
+
+  <h3>父代理内部怎么派</h3>
+  <p>父代理用 Cursor 的 <strong>Task</strong> 工具派出子代理，<code>subagent_type</code> 填角色文件名（如 <code>general-staff</code>、<code>chief-inspector</code>、<code>information-department</code>）。总参谋部、书记处只在规划里写「调度 <code>&lt;role&gt;</code>」，自己不在会话内 spawn；真正派出仍是父代理。</p>
+  <p><strong>子代理看不到当前对话</strong>，任务要写全。按 <code>RULE.md</code>，任务里必须有：</p>
+  <ol>
+    <li>角色：<code>agents/</code> 里的文件名。</li>
+    <li>用户原话：本次要判断的那一句，不改写。</li>
+    <li>材料：已经发生的改动写路径或 diff，不送计划。总监标准 <code>DESIGN.md</code>；美工部 <code>AESTHETIC.md</code>；信息部 <code>INFORMATION.md</code> 及点名分部，另须 <code>desk=</code>。</li>
+    <li>送审次数（仅总监）：写明「这是第 N 次送审」，第一次 N = 1。</li>
+    <li>交回：总监只要结论，通过时不要建议；美工部、信息部交回格式见各自角色文件。</li>
+  </ol>
+
+  <h3>停止规则</h3>
+  <table class="kv">
+    <tr><th>业主说「停止」「停」或 stop</th><td>不再派任何子代理。已经派出的，不再根据它的结果派下一次。书记也不再派。</td></tr>
+    <tr><th>总监第 3 次仍是打回</th><td>停下来，把三次结论告诉业主，不再派第 4 次。送审次数大于 3 时总监只回「已达三次，不再审」。</td></tr>
+  </table>
+
+  <!-- 3 逐角色 -->
+  <h2 class="page">3. 逐角色说明</h2>
+  <p class="lede">八节同一张表。顺序：总参谋部、美工部、信息部、总监、书记处、书记、秘书、运维。</p>
+
+  <section class="role">
+    <h3>3.1 总参谋部</h3>
+    <table class="kv">
+      <tr><th>中文名 · subagent_type</th><td>总参谋部 · <code>general-staff</code>（General Staff）</td></tr>
+      <tr><th>呼出词</th><td>电总参谋部；报文、报、M、Message；直接呼出「总参谋部」/ General Staff</td></tr>
+      <tr><th>负责什么</th><td>读工作日志（每册 worklog 第 1 节）、<code>ai-chain/CONCEPTS.md</code>、工程结构与子代理名册，把业主的自然语言要求拆成「意志 + 任务列表」；现有架构答不上时提出创新方案。可在任务列表中调度美工部、信息部。业主「电总参谋部」且明示安排管理子代理时，可给出非排除角色文件与任务真源的精确改文（父代理落盘）。</td></tr>
+      <tr><th>何时调用</th><td>只在上列呼出词出现时。一旦派出，必须是本次第一个执行的代理。</td></tr>
+      <tr><th>何时不调用</th><td>单独的「电」；「电」后跟其它角色（电书记处、电总监等）；没有呼出词。</td></tr>
+      <tr><th>父代理必须送来</th><td>用户原话（总参谋部看不到对话，以原话为准；原话没写全，它在意志里注明缺什么）。其余专项材料：未提供（按 <code>RULE.md</code> 通则写角色、原话、材料）。</td></tr>
+      <tr><th>交回格式</th><td>「总参谋部规划」：意志；任务列表（可含「调度 <code>&lt;role&gt;</code>：…」与「改 <code>agents/…</code>：…」）；创新方案（没有写「无」）。未呼出交回「未呼出总参谋部，不执行」；已有别的代理先派则交回「顺序错误，不执行」。</td></tr>
+      <tr><th>落盘区 · 只读</th><td>不落盘；只读（<code>readonly: true</code>）。改文由父代理落盘。</td></tr>
+      <tr><th>硬排除</th><td>不调度、不指导、不改写总监与书记处（<code>chief-inspector</code>、<code>secretariat</code>、<code>secretary</code>、<code>clerk</code>、<code>operations</code>、<code>DESIGN.md</code>、<code>secretary.md</code>）。不改 <code>ai-chain/</code>，不写产品代码。会话内不自行 spawn 其它子代理。</td></tr>
+    </table>
+  </section>
+
+  <section class="role">
+    <h3>3.2 美工部</h3>
+    <table class="kv">
+      <tr><th>中文名 · subagent_type</th><td>美工部 · <code>art-department</code>（art department）</td></tr>
+      <tr><th>呼出词</th><td>电美工部；美工部；art department</td></tr>
+      <tr><th>负责什么</th><td>统一网页与启动表层美学：色板、玻璃 chrome、开屏与 logo、启动图标、新分页的视觉延展。对照 <code>AESTHETIC.md</code> 判断是否合现行语言，新面如何延展而不另起一套皮。</td></tr>
+      <tr><th>何时调用</th><td>业主点名；父代理将改动启动图标、开屏、logo、全局 CSS / 玻璃 chrome、新建分页或整块 UI 面的视觉<strong>之前必须先派</strong>；总参谋部任务单写明「调度美工部」。</td></tr>
+      <tr><th>何时不调用</th><td>纯坐标、纯 API、无外观 diff（若被派，回「非美学事项，不审」）。</td></tr>
+      <tr><th>父代理必须送来</th><td>角色 <code>art-department</code>；用户原话或本次美学目标（不改写）；材料：将改或已改的外观相关路径 / diff，或「盘点现行美学」；交回要求。</td></tr>
+      <tr><th>交回格式</th><td>美学结论（合 / 需延展 / 非美学事项，不审）；延展要点（合则写「现行语言可覆盖」）；归属路径；材料（实际看过的路径）。</td></tr>
+      <tr><th>落盘区 · 只读</th><td>不落盘；只读。父代理按延展要点实现，有代码改动再送总监。</td></tr>
+      <tr><th>硬排除</th><td>不改文件、不写实现、不做产品终审，不写「通过 / 打回」（总监用语）。不单方面改数据语义色（US / 非美点色）。不记工作日志。不指挥总监、书记。被总参谋部调度也不因此获得改仓或终审权。</td></tr>
+    </table>
+  </section>
+
+  <section class="role">
+    <h3>3.3 信息部</h3>
+    <table class="kv">
+      <tr><th>中文名 · subagent_type</th><td>信息部 · <code>information-department</code>（information department）</td></tr>
+      <tr><th>呼出词</th><td>电信息部；信息部；information department；或提出数据词条、DATA-SPACE 乱缺、BQL 公式表</td></tr>
+      <tr><th>负责什么</th><td>三分部：<code>manage</code> 数据管理分部（读数、管数、设定调用词条）；<code>clean</code> 数据清理部（乱 / 缺改进建议，无力改进则上报业主）；<code>request</code> 数据请求部（Bloomberg Excel / BQLX 扒取公式表方案，供业主 U 盘到彭博机上拉）。</td></tr>
+      <tr><th>何时调用</th><td>业主点名；需要读数、管数、立或核对词条；数据混乱、缺失需建议或上报；工程要补数需公式表；总参谋部任务单写明「调度信息部」。</td></tr>
+      <tr><th>何时不调用</th><td>未提供（材料只列了何时执行；不属上列情形即不派）。</td></tr>
+      <tr><th>父代理必须送来</th><td>角色 <code>information-department</code>；用户原话（不改写）；<strong><code>desk=</code></strong>（<code>manage</code> | <code>clean</code> | <code>request</code>，可写多个，仍一次 Task）；材料：xlsx / db / json / API / PDF 路径；交回要求。</td></tr>
+      <tr><th>交回格式</th><td>分部（可并列）；结论（短句）；词条或缺口或公式方案（对照分部真源）；材料（实际看过的路径）。</td></tr>
+      <tr><th>落盘区 · 只读</th><td>不落盘；只读。公式表由父代理按规格写入 <code>DATA-SPACE/</code>。</td></tr>
+      <tr><th>硬排除</th><td>不改 <code>ai-chain/</code>，不写实现，不做产品终审，不写「通过 / 打回」，不记工作日志。不单方面改 C-* 坐标语义。清理建议不得写成「已经修了」，不 silently 填造。不在开发机跑 BQL。<code>request</code> 须通读 <code>BQLX.pdf</code>，但不把它当 FIDV 拉数说明书。</td></tr>
+    </table>
+  </section>
+
+  <section class="role">
+    <h3>3.4 总监</h3>
+    <table class="kv">
+      <tr><th>中文名 · subagent_type</th><td>总监 · <code>chief-inspector</code>（chief inspector）</td></tr>
+      <tr><th>呼出词</th><td>电总监；总监；chief inspector；产品理念监督</td></tr>
+      <tr><th>负责什么</th><td>代码改动的终审。只以 <code>DESIGN.md</code> 末尾三条对照判断：是否服务第一版的金融决策；术语、分类、视觉是否沿用已有标准；能否在统一三维坐标里查看、移动、导出。三条都成立写「通过」，一条答不上写「打回」。</td></tr>
+      <tr><th>何时调用</th><td>代码已经改完时必须调出，没有例外；排在美工部方案之后、书记之前。业主点名时即使无代码也派。父代理在总监交回之前不能宣布代码改动已完成。</td></tr>
+      <tr><th>何时不调用</th><td>讨论、规划、还没改代码且未点名。</td></tr>
+      <tr><th>父代理必须送来</th><td>角色 <code>chief-inspector</code>；用户原话；已发生的代码改动（路径或 diff，不送计划）；<strong>「这是第 N 次送审」</strong>（第一次 N = 1，总监原样使用不自加）；交回要求。</td></tr>
+      <tr><th>交回格式</th><td>结论（通过 / 打回 / 无代码改动，不审）；次数（第 N 次送审）；依据（<code>DESIGN.md</code> 对应条，通过写三条都成立）；总监建议（仅打回）；材料。对话栏父代理先写「一次通过」或「第 N 次打回」。</td></tr>
+      <tr><th>落盘区 · 只读</th><td>不落盘；只读。</td></tr>
+      <tr><th>硬排除</th><td>不改设计、不写实现、不改文件。无 diff 只回「无代码改动，不审」。通过不写建议或替代做法；建议只能从 <code>DESIGN.md</code> 已写的条来。至多三次送审，超过回「已达三次，不再审」。</td></tr>
+    </table>
+  </section>
+
+  <section class="role">
+    <h3>3.5 书记处</h3>
+    <table class="kv">
+      <tr><th>中文名 · subagent_type</th><td>书记处 · <code>secretariat</code>（Secretariat）</td></tr>
+      <tr><th>呼出词</th><td>电书记处；书记处；Secretariat</td></tr>
+      <tr><th>负责什么</th><td>与总参谋部平级的规划方。把要求拆成意志 + 任务列表，只调度下属三部：书记、秘书、运维。工作区 <code>library/</code>。</td></tr>
+      <tr><th>何时调用</th><td>业主点名；要报告、汇报、PPT、展出、可打印读本 / 讲稿（规划里写「调度 <code>clerk</code>」）；运行出现 bug 或业主说有 bug 要记解法（规划里写「调度 <code>operations</code>」）。</td></tr>
+      <tr><th>何时不调用</th><td>未呼出且不属于文稿、bug 两种情形（若被派，回「未呼出书记处，不执行」）。谈话末项的书记不经书记处转发。</td></tr>
+      <tr><th>父代理必须送来</th><td>未提供专项清单（按 <code>RULE.md</code> 通则：角色、用户原话、材料）。书记处自读 <code>library/</code> 当前 worklog 第 1 节、<code>library/README.md</code>、<code>RULE.md</code> 书记处节。</td></tr>
+      <tr><th>交回格式</th><td>「书记处规划」：意志；任务列表（「调度 <code>clerk</code>：…」或「调度 <code>operations</code>：…」）；创新方案（没有写「无」）。</td></tr>
+      <tr><th>落盘区 · 只读</th><td>自身不落盘；只读。下属落盘：书记 <code>worklog-xxx.md</code>、秘书 <code>library/showable-report/</code>、运维 <code>library/bug-report/ops-log-xxx.md</code>。</td></tr>
+      <tr><th>硬排除</th><td>不调度、不指导总监与总参谋部；不派美工部、信息部。不改 <code>DESIGN.md</code>，不写产品代码。不代替谈话末项的书记，不把「每次最后记日志」写进自己的必派名单。会话内不自行 spawn。</td></tr>
+    </table>
+  </section>
+
+  <section class="role">
+    <h3>3.6 书记</h3>
+    <table class="kv">
+      <tr><th>中文名 · subagent_type</th><td>书记 · <code>secretary</code>（secretary）</td></tr>
+      <tr><th>呼出词</th><td>电书记；书记；secretary；工作日志</td></tr>
+      <tr><th>负责什么</th><td>只管 worklog：往 <code>library/</code> 编号最大的 <code>worklog-xxx.md</code> 第 1 节「对话流水」末尾追加一行（# / U / A），序号全库连续。本条写进去会超过 10000 字（不含空白）就另开下一册。</td></tr>
+      <tr><th>何时调用</th><td>每次谈话的最后一项，没有例外；有总监时排在总监交回之后。比总监更根本。</td></tr>
+      <tr><th>何时不调用</th><td>谈话里的事未全部做完之前；业主说停之后。</td></tr>
+      <tr><th>父代理必须送来</th><td>四项：用户原话、任务、主代理执行、各子代理执行。缺哪项书记写「未提供」。</td></tr>
+      <tr><th>交回格式</th><td>记在第几条，以及这一行的 U 和 A。行内没有子代理写「无子代理」；有总监写一次通过或第几次打回。</td></tr>
+      <tr><th>落盘区 · 只读</th><td><code>library/worklog-xxx.md</code>；可写。</td></tr>
+      <tr><th>硬排除</th><td>不参与决策，不改设计，不改产品代码。不写报告、汇报、PPT、展出（秘书）。不改旧行，不改第 2 节及以后，不把旧行拆到新册。</td></tr>
+    </table>
+  </section>
+
+  <section class="role">
+    <h3>3.7 秘书</h3>
+    <table class="kv">
+      <tr><th>中文名 · subagent_type</th><td>秘书 · <code>clerk</code>（clerk）</td></tr>
+      <tr><th>呼出词</th><td>电秘书；秘书；或提出报告、汇报、PPT、展出、读本、讲稿</td></tr>
+      <tr><th>负责什么</th><td>写给队员或对外的记录性文稿：报告、汇报、可打印 HTML 读本 / 讲稿、展出说明。印法按 skill <code>.cursor/skills/clerk-showable-report/SKILL.md</code>（浅纸、A4、Iowan 同族）。</td></tr>
+      <tr><th>何时调用</th><td>业主点名或要上述文稿；书记处规划写明调度秘书。</td></tr>
+      <tr><th>何时不调用</th><td>不是每次谈话必派；没有文稿需求时不派。</td></tr>
+      <tr><th>父代理必须送来</th><td>用户原话；要哪种文稿；依据材料路径（PDF、worklog、工程史、截图目录）。缺则写「未提供」。</td></tr>
+      <tr><th>交回格式</th><td>写了哪些路径 + 结构一句。</td></tr>
+      <tr><th>落盘区 · 只读</th><td><code>library/showable-report/</code>；可写。</td></tr>
+      <tr><th>硬排除</th><td>不写 worklog（书记），不写 ops-log（运维），不改 <code>ai-chain/</code>，不参与决策。材料不足不编。不把工程暗底玻璃拷到打印纸。</td></tr>
+    </table>
+  </section>
+
+  <section class="role">
+    <h3>3.8 运维</h3>
+    <table class="kv">
+      <tr><th>中文名 · subagent_type</th><td>运维 · <code>operations</code>（operations）</td></tr>
+      <tr><th>呼出词</th><td>电运维；运维</td></tr>
+      <tr><th>负责什么</th><td>记录运行中的 bug 与解法：往 <code>library/bug-report/</code> 编号最大的 <code>ops-log-xxx.md</code> 第 1 节追加一行（# / 现象 / 原因 / 解法 / 路径）。字数规则同 worklog，去空白超 10000 字开下一册。</td></tr>
+      <tr><th>何时调用</th><td>运行、构建、克隆、摄入、启动器、端口、缺文件等已构成故障或明确失败；业主说有 bug 要记原因与解决过程；业主点名；书记处调度。</td></tr>
+      <tr><th>何时不调用</th><td>不是每次谈话必派。产品功能需求（不是故障）不记入 ops-log。</td></tr>
+      <tr><th>父代理必须送来</th><td>现象、原因（可写未提供）、解法或「未解决」、相关路径。</td></tr>
+      <tr><th>交回格式</th><td>记在第几条，以及该行要点。</td></tr>
+      <tr><th>落盘区 · 只读</th><td><code>library/bug-report/ops-log-xxx.md</code>；可写。</td></tr>
+      <tr><th>硬排除</th><td>不改产品代码（解法需改代码时只记「父代理已改 / 未改」，终审仍归总监）。不记 worklog。不改旧行。不编。</td></tr>
+    </table>
+  </section>
+
+  <!-- 4 标准顺序 -->
+  <section class="keep">
+    <h2 class="page">4. 一次谈话的标准顺序</h2>
+    <table>
+      <tr><th style="width:8%">步</th><th style="width:26%">谁</th><th>条件与要点</th></tr>
+      <tr><td>1</td><td>总参谋部</td><td>仅当业主呼出。一旦派出必须第一个执行，否则回「顺序错误，不执行」。</td></tr>
+      <tr><td>2</td><td>美工部 / 信息部</td><td>点名、规则触发（外观改动前必派美工部）或总参谋部任务单写明时。只出方案。</td></tr>
+      <tr><td>3</td><td>父代理改代码</td><td>按规划与方案落地。产品实现只归父代理。</td></tr>
+      <tr><td>4</td><td>总监</td><td>有代码改动必派。父代理在对话栏写「一次通过」或「第 N 次打回」；打回则按「总监建议」改，再送审，至多三次。</td></tr>
+      <tr><td>5</td><td>书记</td><td>永远最后，包括总监已交回的情况。业主说停则不派。</td></tr>
+    </table>
+    <h3>书记处一路（单写）</h3>
+    <table>
+      <tr><th style="width:26%">情形</th><th>顺序</th></tr>
+      <tr><td>要报告、PPT、读本、讲稿</td><td>书记处 → 秘书（父代理按书记处规划派出）</td></tr>
+      <tr><td>运行出 bug 或要记 bug</td><td>书记处 → 运维（父代理按书记处规划派出）</td></tr>
+    </table>
+    <p class="note">书记处一路结束后，谈话末项仍是父代理直接派书记，不经书记处转发。</p>
+  </section>
+
+  <!-- 5 调度矩阵 -->
+  <section class="keep">
+    <h2>5. 谁能调度谁</h2>
+    <table class="matrix">
+      <tr>
+        <th>调度方 \ 被调度方</th>
+        <th>总参谋部</th><th>美工部</th><th>信息部</th><th>总监</th>
+        <th>书记处</th><th>书记</th><th>秘书</th><th>运维</th>
+      </tr>
+      <tr><td>父代理</td><td>可</td><td>可</td><td>可</td><td>可</td><td>可</td><td>可</td><td>可</td><td>可</td></tr>
+      <tr><td>总参谋部</td><td></td><td>可</td><td>可</td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td>书记处</td><td></td><td></td><td></td><td></td><td></td><td>可</td><td>可</td><td>可</td></tr>
+    </table>
+    <ul class="note">
+      <li>只有父代理真正调用 Task。总参谋部、书记处的「可」指在规划任务单里写「调度 <code>&lt;role&gt;</code>」，由父代理按单派出。</li>
+      <li>书记处可调度书记，但每次谈话末项的书记由父代理直接派，不经书记处转发。</li>
+      <li>总参谋部与书记处互不调度；两者都不调度总监。</li>
+    </ul>
+  </section>
+
+  <!-- 附录 -->
+  <section class="keep">
+    <h2 class="page">附录 · Cursor 内置子代理</h2>
+    <p>以下由 Cursor 自带，<strong>不属 FIDV 编制</strong>，没有 <code>agents/</code> 角色文件，也不受本册调度规则约束。需要时在对话里直接让主代理使用。</p>
+    <table>
+      <tr><th style="width:26%">subagent_type</th><th>用途</th></tr>
+      <tr><td><code>explore</code></td><td>快速搜代码、按文件名或关键词探查代码库。</td></tr>
+      <tr><td><code>generalPurpose</code></td><td>通用多步任务：调研复杂问题、搜索、执行多步操作。</td></tr>
+      <tr><td><code>browser-use</code></td><td>浏览器操作：打开网页、点击、填表、截图、网页测试。</td></tr>
+      <tr><td><code>cursor-guide</code></td><td>Cursor 产品问答（IDE、CLI、Cloud Agents 等怎么用）。</td></tr>
+      <tr><td><code>ci-investigator</code></td><td>查 PR 上某个 CI 检查失败的根因。</td></tr>
+      <tr><td><code>bugbot</code></td><td>对本地代码改动做 Bugbot 式代码审查。</td></tr>
+      <tr><td><code>security-review</code></td><td>对本地代码改动做安全审查。</td></tr>
+      <tr><td><code>best-of-n-runner</code></td><td>在隔离 git worktree 里并行尝试，各自一个分支。</td></tr>
+    </table>
+    <p class="note">内置 <code>bugbot</code>、<code>security-review</code> 的审查不替代总监终审；有代码改动仍按第 4 节送总监。</p>
+  </section>
+
+  <!-- 速查卡 -->
+  <section class="page">
+    <h2>速查卡</h2>
+    <table class="card">
+      <tr><th style="width:15%">角色</th><th style="width:24%">呼出词</th><th style="width:24%">何时派</th><th style="width:20%">交回</th><th>落盘</th></tr>
+      <tr><td>总参谋部<br /><code>general-staff</code></td><td>电总参谋部、报文、报、M、Message、总参谋部</td><td>仅呼出时；第一个执行</td><td>意志 · 任务列表 · 创新方案</td><td>不落盘（只读）</td></tr>
+      <tr><td>美工部<br /><code>art-department</code></td><td>电美工部、美工部、art department</td><td>点名；改图标 / 开屏 / logo / 全局 CSS / 新页外观之前</td><td>美学结论 · 延展要点 · 归属路径 · 材料</td><td>不落盘（只读）</td></tr>
+      <tr><td>信息部<br /><code>information-department</code></td><td>电信息部、信息部、information department</td><td>点名；读管数、乱缺、补数公式；须 <code>desk=</code></td><td>分部 · 结论 · 词条 / 缺口 / 公式方案 · 材料</td><td>不落盘（只读）；公式表由父代理写 <code>DATA-SPACE/</code></td></tr>
+      <tr><td>总监<br /><code>chief-inspector</code></td><td>电总监、总监、chief inspector、产品理念监督</td><td>代码改完必派；书记之前；至多三次</td><td>结论 · 次数 · 依据 · 总监建议（仅打回）· 材料</td><td>不落盘（只读）</td></tr>
+      <tr><td>书记处<br /><code>secretariat</code></td><td>电书记处、书记处、Secretariat</td><td>点名；要文稿；出 bug</td><td>意志 · 任务列表 · 创新方案</td><td>不落盘（只读）；管 <code>library/</code></td></tr>
+      <tr><td>书记<br /><code>secretary</code></td><td>电书记、书记、secretary、工作日志</td><td>每次谈话最后一项</td><td>第几条 · U · A</td><td><code>library/worklog-xxx.md</code></td></tr>
+      <tr><td>秘书<br /><code>clerk</code></td><td>电秘书、秘书；报告、汇报、PPT、展出、读本、讲稿</td><td>要文稿；书记处调度</td><td>路径 · 结构一句</td><td><code>library/showable-report/</code></td></tr>
+      <tr><td>运维<br /><code>operations</code></td><td>电运维、运维</td><td>故障已现；要记 bug；书记处调度</td><td>第几条 · 该行要点</td><td><code>library/bug-report/ops-log-xxx.md</code></td></tr>
+    </table>
+    <p class="note">单独「电」不派。说「停」不再派任何子代理。总监第 3 次仍打回即停。子代理看不到对话，任务写全。</p>
+    <p class="foot">依据 <code>agents/</code>、<code>agent_tasklist/</code>（RULE.md 与各任务真源）· 2026-10-06</p>
+  </section>
+</body>
+</html>
