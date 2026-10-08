@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>AI Industry Chain — 3D Slice Cube</title>
-<link rel="stylesheet" href="/css/app.css?v=21" />
+<link rel="stylesheet" href="/css/app.css?v=23" />
 <script type="importmap">
 {
   "imports": {
@@ -30,6 +30,14 @@
         <p>Click a company or slice. The slice stays; the rest of the cube shifts left along −x and fades. Esc clears selection, then focus.</p>
       </div>
       <p class="note foot">Data via <code>/api/bundle</code>.</p>
+    </aside>
+
+    <!-- [C-COMPANY-ZOOM] Bottom-left info stage; canvas scales so a scene corner stays top-right -->
+    <aside id="companyFocus" class="company-focus" hidden aria-hidden="true" aria-label="Company detail">
+      <button type="button" id="companyFocusClose" class="company-focus-close" title="Close" aria-label="Close company detail">×</button>
+      <div id="companyFocusInner" class="company-focus-inner">
+        <div id="companyFocusBody" class="company-focus-body"></div>
+      </div>
     </aside>
 
     <button type="button" id="helpToggle" class="help-toggle" title="Toggle controls help (?)">?</button>

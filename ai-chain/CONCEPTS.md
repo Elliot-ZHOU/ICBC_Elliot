@@ -92,7 +92,8 @@ Position changes go through `ai-chain/web/js/coords.js` (`LAYOUT`, or an object'
 | ID | EN | 中 | State field / 字段 | Behavior / 行为 |
 |----|----|----|-------------------|-----------------|
 | **C-FOCUS** | focused slice | 焦点切片 | `state.focusLayer = i \| null` | One slice stays put; the rest of the cube shifts along **−x** (left) and fades. |
-| **C-SELECT** | selected company | 选中公司 | `state.selectedId` | Detail panel; stronger emissive. Esc clears this first. |
+| **C-SELECT** | selected company | 选中公司 | `state.selectedId` | Stronger emissive; enters **C-COMPANY-ZOOM**. Esc clears this first. |
+| **C-COMPANY-ZOOM** | company focus stage | 公司放大聚焦 | `#viewport.company-zoom` + `#companyFocus` | On select: canvas scales from bottom-left so a scene corner stays top-right; company fields fill the opened blank (glass). If `bondSchedule` exists, a bottom sparkline (time × $bn) shows total / principal / interest. Close via ×, blank glass, or Esc; reverse transition back to prior framing (camera held). |
 | **C-HOVER** | hover | 悬停 | `state.hoverId` | Tooltip only. |
 | **C-DIM** | off-focus fade | 离焦淡出 / 抽回淡入 | — | Non-focus slices fade to opacity 0. Retract fades back to resting opacity on the same lerp as exit. Materials stay `transparent` while fading. |
 | **C-FILTER** | filter mode | 过滤 | `state.filterMode` | `all` / `us` / `intl`. |
@@ -111,12 +112,12 @@ Position changes go through `ai-chain/web/js/coords.js` (`LAYOUT`, or an object'
 | **C-RETRACT** | retract | 抽回 | Focus cleared; the cube eases back along **+x** and fades in on the same timing as exit fade-out (`lerpPullOut` + `lerpVisibility`). **Camera must not auto-yaw toward origin.** | `focusSlice` toggle / `clearFocus` |
 | **C-PULL-ZONE** | pull-frame hit zone | 抽出点击区 | Square∖disk on slice face: inside 1×1 square, **outside** outermost concentric ring. Misses inside the ring do **not** toggle focus. Tested in user `(s, x, y)`. | `isPullFrameHit`, `LAYOUT.ringRadius` |
 | **C-FOCUS-ACT** | focus slice | 聚焦切片 | Set `focusLayer`; the slice stays, the cube exits. Via plane click, `[` `]`, or pick/search a company on that slice. No permanent layer-list chrome. | `focusSlice` |
-| **C-PICK** | pick company | 点选公司 | Raycast sphere → select + focus its layer. Plane toggle only if hit is in **C-PULL-ZONE**. | `pick`, `selectCompany` |
+| **C-PICK** | pick company | 点选公司 | Raycast sphere → select + focus its layer (+ **C-COMPANY-ZOOM**). Plane toggle only if hit is in **C-PULL-ZONE**. Camera held (no pick framing dolly). | `pick`, `selectCompany` |
 | **C-STDVIEW** | standard view | 标准视角 | Snap camera to canonical pose for current focus state. Hotkey **C** / button / middle-click. | `goStandardView`, `standardPose` |
 | **C-RESET** | reset view | 重置 | Clear focus/select; go standard overview pose. | `resetCamera` |
 
 **Camera rule / 相机约定** `[C-CAM-HOLD]`  
-Changing or clearing slice focus **must not** animate orbit target into the cube interior. Only **C-STDVIEW** / **C-RESET** / explicit pick framing may move the camera.
+Changing or clearing slice focus **must not** animate orbit target into the cube interior. Only **C-STDVIEW** / **C-RESET** may move the camera. Company pick uses **C-COMPANY-ZOOM** (CSS stage) and holds the camera.
 
 **View space / 视空间** `[C-VIEW-SPACE]`  
 Orbit dolly (wheel / **R·F**) clamps at `controls.maxDistance = LAYOUT.viewSpace.radius · UNIT`. Standard poses stay inside the ball (`‖overview‖≈38 < 200`). This edition limits distance to `target`, not a hard shell about the origin after pan.

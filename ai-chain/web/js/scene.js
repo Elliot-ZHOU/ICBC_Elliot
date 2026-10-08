@@ -711,6 +711,7 @@ function resetCamera(ctx) {
   state.hoverId = null;
   ctx.cubeExit = 0;
   ctx.exitStayLayer = null;
+  ctx.controls.enabled = true;
   ctx.planeGroups.forEach((g) => {
     g.userData.pull = 0;
     g.userData.exitX = 0;
@@ -729,6 +730,7 @@ function focusSlice(ctx, i) {
     state.focusLayer = null;
     state.selectedId = null;
     state.hoverId = null;
+    ctx.controls.enabled = true;
     queueVisibilityTargets(ctx);
     ctx.hooks.onClear?.();
     return;
@@ -736,6 +738,7 @@ function focusSlice(ctx, i) {
   state.focusLayer = i;
   ctx.exitStayLayer = i;
   state.selectedId = null;
+  ctx.controls.enabled = true;
   queueVisibilityTargets(ctx);
   // Keep current camera — no recenter toward cube interior
   ctx.hooks.onFocusChange?.();
@@ -745,6 +748,7 @@ function focusSlice(ctx, i) {
 function clearFocus(ctx) {
   if (state.selectedId != null) {
     state.selectedId = null;
+    ctx.controls.enabled = true;
     queueVisibilityTargets(ctx);
     if (state.focusLayer != null) ctx.hooks.onFocusChange?.();
     else ctx.hooks.onClear?.();
@@ -754,6 +758,7 @@ function clearFocus(ctx) {
     ctx.exitStayLayer = state.focusLayer;
     state.focusLayer = null;
     state.hoverId = null;
+    ctx.controls.enabled = true;
     queueVisibilityTargets(ctx);
     ctx.hooks.onClear?.();
     return;
@@ -767,13 +772,9 @@ function selectCompany(ctx, id) {
   state.selectedId = id;
   state.focusLayer = c.layer;
   ctx.exitStayLayer = c.layer;
-  const mesh = ctx.byId.get(id);
-  if (mesh?.userData.coord) {
-    const base = mesh.userData.coord;
-    const world = userToWorld(ctx, { s: base.s, x: base.x, y: base.y });
-    const toTarget = new THREE.Vector3(world.x, world.y * 0.35, 0);
-    startCamAnim(ctx, ctx.camera.position.clone(), toTarget, 420);
-  }
+  // [C-COMPANY-ZOOM] Hold camera; stage zoom is CSS from bottom-left (ui.js).
+  ctx.camAnim = null;
+  ctx.controls.enabled = false;
   queueVisibilityTargets(ctx);
   ctx.hooks.onSelect?.(c);
 }

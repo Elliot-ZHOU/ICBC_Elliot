@@ -64,8 +64,31 @@ p { margin: 0 0 10px; }
   position: relative;
   z-index: 0;
   cursor: grab;
+  transform-origin: 14% 86%;
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 #viewport canvas:active { cursor: grabbing; }
+
+/* [C-COMPANY-ZOOM] Magnify toward bottom-left blank; scene remnant stays top-right */
+#viewport.company-zoom canvas {
+  transform: scale(2.35);
+  pointer-events: none;
+  cursor: default;
+}
+#viewport.company-zoom .float-detail {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+#viewport.company-zoom .top-search,
+#viewport.company-zoom .hud,
+#viewport.company-zoom .status-bar,
+#viewport.company-zoom .help-toggle,
+#viewport.company-zoom .nav-hint {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
 
 .top-search {
   position: absolute;
@@ -143,6 +166,7 @@ p { margin: 0 0 10px; }
   width: min(300px, calc(100% - 28px));
   max-height: calc(100% - 140px);
   overflow: auto;
+  transition: opacity 0.35s ease;
 }
 
 #detail h3 { margin: 0 0 4px; font-size: 17px; font-weight: 600; color: var(--text); }
@@ -157,6 +181,172 @@ p { margin: 0 0 10px; }
 #detail table { width: 100%; border-collapse: collapse; font-size: 12px; }
 #detail th, #detail td { padding: 3px 4px; text-align: left; }
 #detail thead { color: var(--muted); }
+
+/* [C-COMPANY-ZOOM] Large glass reading face on bottom-left blank */
+.company-focus {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: min(64%, 760px);
+  height: min(82%, calc(100% - 40px));
+  z-index: 5;
+  margin: 0;
+  padding: 18px 20px 22px;
+  box-sizing: border-box;
+  background: var(--glass-strong);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(42, 49, 60, 0.45);
+  border-left: 0;
+  border-bottom: 0;
+  border-radius: 0 12px 0 0;
+  color: var(--text);
+  opacity: 0;
+  transform: scale(0.97);
+  transform-origin: 20% 80%;
+  transition: opacity 0.42s ease-out, transform 0.42s ease-out;
+  pointer-events: auto;
+  cursor: default;
+}
+.company-focus.is-open {
+  opacity: 1;
+  transform: scale(1);
+}
+.company-focus-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid rgba(42, 49, 60, 0.7);
+  border-radius: 6px;
+  background: var(--glass);
+  color: var(--muted);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 1;
+}
+.company-focus-close:hover { color: var(--text); border-color: #3d4a5c; }
+.company-focus-close:focus-visible { outline: 1px solid var(--accent); }
+.company-focus-inner {
+  height: 100%;
+  overflow: hidden;
+  padding-right: 8px;
+  padding-top: 8px;
+  cursor: auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.company-focus-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.company-focus-body h3 {
+  margin: 0 0 6px;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text);
+  padding-right: 36px;
+  flex: none;
+}
+.company-focus-body .meta {
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 16px;
+  flex: none;
+}
+.company-focus-body .kv {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 8px 14px;
+  font-size: 13.5px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+.company-focus-body .kv span:nth-child(odd) { color: var(--muted); }
+.company-focus-body .kv span:nth-child(even) { color: var(--text); }
+
+/* Bond schedule curve under kv — only when bondSchedule exists */
+.bond-chart {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(42, 49, 60, 0.45);
+  flex: none;
+}
+.bond-chart-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 14px;
+  margin-bottom: 6px;
+}
+.bond-chart-title {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.bond-chart-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10.5px;
+  color: var(--muted);
+}
+.bond-leg {
+  display: inline-block;
+  width: 14px;
+  height: 2px;
+  margin-right: 2px;
+  vertical-align: middle;
+  border-radius: 1px;
+}
+.bond-leg.total { background: var(--accent); height: 2.5px; }
+.bond-leg.principal { background: var(--text); }
+.bond-leg.interest {
+  background: transparent;
+  border-top: 1.5px dashed var(--muted);
+  height: 0;
+  margin-bottom: 3px;
+}
+.bond-chart-svg {
+  display: block;
+  width: 100%;
+  height: 140px;
+}
+.bond-chart-svg .bond-grid {
+  stroke: rgba(42, 49, 60, 0.35);
+  stroke-width: 1;
+}
+.bond-chart-svg .bond-axis {
+  stroke: rgba(42, 49, 60, 0.7);
+  stroke-width: 1;
+}
+.bond-chart-svg .bond-tick {
+  fill: var(--muted);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.bond-chart-svg .bond-line.total {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+.bond-chart-svg .bond-line.principal {
+  stroke: var(--text);
+  stroke-width: 1.25;
+  opacity: 0.85;
+}
+.bond-chart-svg .bond-line.interest {
+  stroke: var(--muted);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  opacity: 0.9;
+}
 
 .note { font-size: 11.5px; color: var(--muted); line-height: 1.5; }
 .note.foot { margin: 10px 0 0; opacity: 0.75; }

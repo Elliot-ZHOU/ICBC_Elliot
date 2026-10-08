@@ -1,4 +1,4 @@
-/** UI panels. Concepts: ../CONCEPTS.md ([C-STDVIEW], [C-FOCUS], …). */
+/** UI panels. Concepts: ../CONCEPTS.md ([C-STDVIEW], [C-FOCUS], [C-COMPANY-ZOOM], …). */
 import {
   state,
   passesFilter,
@@ -7,6 +7,9 @@ import {
   visibleCompanies,
 } from "./state.js";
 import { formatCoord } from "./coords.js";
+import { bondChartHtml } from "./bondChart.js";
+
+const ZOOM_MS = 450;
 
 export function createUI(sceneApi) {
   const detail = document.getElementById("detail");
@@ -15,7 +18,14 @@ export function createUI(sceneApi) {
   const hoverTip = document.getElementById("hoverTip");
   const navHint = document.getElementById("navHint");
   const helpToggle = document.getElementById("helpToggle");
+  const viewport = document.getElementById("viewport");
+  const companyFocus = document.getElementById("companyFocus");
+  const companyFocusBody = document.getElementById("companyFocusBody");
+  const companyFocusClose = document.getElementById("companyFocusClose");
   let searchTimer = null;
+  let zoomToken = 0;
+  let zoomOpen = false;
+  let zoomExitTimer = null;
 
   // Layer list chrome removed — focus via plane click / [ ] / search / right float roster.
   function renderLayers() {}
@@ -55,11 +65,11 @@ export function createUI(sceneApi) {
     return `${c.ring * 10}–${c.ring * 10 + 9.9} (ring ${c.ring})`;
   }
 
-  function renderDetail(c) {
+  function detailMarkup(c) {
     const region = state.countries[c.country] || c.country;
     const usTag = c.country === "US" ? "US" : "Non-US";
     const L = state.layers[c.layer];
-    detail.innerHTML = `
+    return `
       <h3>${c.name}</h3>
       <div class="meta">${L?.name || ""} | ${region} | ${usTag}</div>
       <div class="kv">
@@ -75,6 +85,64 @@ export function createUI(sceneApi) {
         <span>Role note</span><span>${c.note || "—"}</span>
       </div>
     `;
+  }
+
+  function renderDetail(c) {
+    detail.innerHTML = detailMarkup(c);
+  }
+
+  /** [C-COMPANY-ZOOM] Enter: canvas scales from bottom-left; info fills the opened blank. */
+  function enterCompanyZoom(c) {
+    if (!companyFocus || !viewport || !c) return;
+    if (zoomExitTimer != null) {
+      clearTimeout(zoomExitTimer);
+      zoomExitTimer = null;
+    }
+    zoomToken += 1;
+    // Bond chart only on the focus stage (not the small float panel).
+    companyFocusBody.innerHTML = detailMarkup(c) + bondChartHtml(c.bondSchedule);
+    companyFocus.hidden = false;
+    companyFocus.setAttribute("aria-hidden", "false");
+    // Keep small float panel in sync but visually demoted while zoomed.
+    renderDetail(c);
+    requestAnimationFrame(() => {
+      viewport.classList.add("company-zoom");
+      companyFocus.classList.add("is-open");
+      zoomOpen = true;
+    });
+  }
+
+  /** [C-COMPANY-ZOOM] Exit: reverse scale; hide stage after transition (interruptible). */
+  function exitCompanyZoom() {
+    if (!companyFocus || !viewport) return;
+    if (!zoomOpen && companyFocus.hidden) return;
+    const token = ++zoomToken;
+    viewport.classList.remove("company-zoom");
+    companyFocus.classList.remove("is-open");
+    zoomOpen = false;
+    if (zoomExitTimer != null) clearTimeout(zoomExitTimer);
+    zoomExitTimer = setTimeout(() => {
+      zoomExitTimer = null;
+      if (token !== zoomToken) return;
+      companyFocus.hidden = true;
+      companyFocus.setAttribute("aria-hidden", "true");
+      companyFocusBody.innerHTML = "";
+    }, ZOOM_MS);
+  }
+
+  if (companyFocusClose) {
+    companyFocusClose.addEventListener("click", (e) => {
+      e.stopPropagation();
+      sceneApi.clearFocus();
+    });
+  }
+  if (companyFocus) {
+    // Blank glass (outside the inner content) closes; content clicks stay.
+    companyFocus.addEventListener("click", (e) => {
+      if (e.target.closest(".company-focus-inner")) return;
+      if (e.target.closest(".company-focus-close")) return;
+      sceneApi.clearFocus();
+    });
   }
 
   function renderLayerRoster(layerIdx) {
@@ -207,18 +275,23 @@ export function createUI(sceneApi) {
     },
     onSelect(c) {
       syncLayerActive();
-      renderDetail(c);
+      enterCompanyZoom(c);
       updateStatus();
       writeHash();
+      results.innerHTML = "";
+      hoverTip.hidden = true;
     },
     onFocusChange() {
       syncLayerActive();
+      exitCompanyZoom();
       if (state.focusLayer != null) renderLayerRoster(state.focusLayer);
+      else setDetailDefault();
       updateStatus();
       writeHash();
     },
     onClear() {
       syncLayerActive();
+      exitCompanyZoom();
       setDetailDefault();
       updateStatus();
       writeHash();
@@ -226,6 +299,7 @@ export function createUI(sceneApi) {
     },
     onReset() {
       syncLayerActive();
+      exitCompanyZoom();
       setDetailDefault();
       updateStatus();
       writeHash();
