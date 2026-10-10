@@ -769,14 +769,16 @@ function clearFocus(ctx) {
 function selectCompany(ctx, id) {
   const c = companyById(id);
   if (!c) return;
+  // Overview (no focus) = 3D: land on the company's slice first; zoom only after 2D.
+  const fromOverview = state.focusLayer == null;
   state.selectedId = id;
   state.focusLayer = c.layer;
   ctx.exitStayLayer = c.layer;
-  // [C-COMPANY-ZOOM] Hold camera; stage zoom is CSS from bottom-left (ui.js).
+  // [C-COMPANY-ZOOM] Hold camera; stage zoom is CSS from bottom-left (ui.js), 2D only.
   ctx.camAnim = null;
   ctx.controls.enabled = false;
   queueVisibilityTargets(ctx);
-  ctx.hooks.onSelect?.(c);
+  ctx.hooks.onSelect?.(c, { fromOverview });
 }
 
 function queueVisibilityTargets(ctx) {
@@ -1002,7 +1004,11 @@ function isPullFrameHit(ctx, hit) {
   return dx * dx + dy * dy > R * R;
 }
 
-/** [C-PICK] company first; else [C-FOCUS-ACT] only in [C-PULL-ZONE]. */
+/**
+ * [C-PICK] Company first; else [C-FOCUS-ACT] only in [C-PULL-ZONE].
+ * Overview (3D): company → selectCompany (in-cube slice focus then zoom); plane → focus only, no zoom.
+ * Focused (2D): company → C-COMPANY-ZOOM; plane toggles focus as before.
+ */
 function pick(ctx, event) {
   setPointer(ctx, event);
   const companyHits = ctx.raycaster.intersectObjects(
@@ -1023,6 +1029,7 @@ function pick(ctx, event) {
   if (!planeHits.length) return;
   const hit = planeHits[0];
   if (!isPullFrameHit(ctx, hit)) return;
+  // Slice / pull-zone: enter that slice only — never C-COMPANY-ZOOM.
   focusSlice(ctx, hit.object.userData.layerIndex);
 }
 

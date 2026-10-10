@@ -1,4 +1,4 @@
-/** UI panels. Concepts: ../CONCEPTS.md ([C-STDVIEW], [C-FOCUS], [C-COMPANY-ZOOM], …). */
+/** UI panels. Concepts: ../CONCEPTS.md ([C-STDVIEW], [C-FOCUS], [C-BRIEF], [C-COMPANY-ZOOM], …). */
 import {
   state,
   passesFilter,
@@ -13,11 +13,13 @@ const ZOOM_MS = 450;
 
 export function createUI(sceneApi) {
   const detail = document.getElementById("detail");
+  const detailPanel = document.getElementById("detailPanel");
   const results = document.getElementById("results");
   const statusBar = document.getElementById("statusBar");
   const hoverTip = document.getElementById("hoverTip");
   const navHint = document.getElementById("navHint");
   const helpToggle = document.getElementById("helpToggle");
+  const briefToggle = document.getElementById("briefToggle");
   const viewport = document.getElementById("viewport");
   const companyFocus = document.getElementById("companyFocus");
   const companyFocusBody = document.getElementById("companyFocusBody");
@@ -26,10 +28,51 @@ export function createUI(sceneApi) {
   let zoomToken = 0;
   let zoomOpen = false;
   let zoomExitTimer = null;
+  /** Deferred C-COMPANY-ZOOM after overview→slice so 3D never shows the stage. */
+  let pendingZoomTimer = null;
+  const OVERVIEW_TO_ZOOM_MS = 280;
+  /** [C-BRIEF] Session-only; default off — hide float-detail roster while focused. */
+  let briefOn = false;
 
-  // Layer list chrome removed — focus via plane click / [ ] / search / right float roster.
+  function cancelPendingZoom() {
+    if (pendingZoomTimer != null) {
+      clearTimeout(pendingZoomTimer);
+      pendingZoomTimer = null;
+    }
+  }
+
+  // Layer list chrome removed — focus via plane click / [ ] / search / right float roster (+ [C-BRIEF]).
   function renderLayers() {}
   function syncLayerActive() {}
+
+  function syncBriefChip() {
+    if (!briefToggle) return;
+    briefToggle.classList.toggle("active", briefOn);
+    briefToggle.setAttribute("aria-pressed", briefOn ? "true" : "false");
+  }
+
+  /** [C-BRIEF] Hide `#detailPanel` under C-FOCUS when brief is off; overview keeps default copy. */
+  function syncDetailPanelVisibility() {
+    if (!detailPanel) return;
+    const hide = state.focusLayer != null && !briefOn;
+    detailPanel.hidden = hide;
+    detailPanel.setAttribute("aria-hidden", hide ? "true" : "false");
+  }
+
+  function fillFocusDetail() {
+    if (state.focusLayer == null) {
+      setDetailDefault();
+      return;
+    }
+    if (state.selectedId != null) {
+      const c = companyById(state.selectedId);
+      if (c) {
+        renderDetail(c);
+        return;
+      }
+    }
+    renderLayerRoster(state.focusLayer);
+  }
 
   function updateStatus() {
     const vis = visibleCompanies();
@@ -91,9 +134,11 @@ export function createUI(sceneApi) {
     detail.innerHTML = detailMarkup(c);
   }
 
-  /** [C-COMPANY-ZOOM] Enter: canvas scales from bottom-left; info fills the opened blank. */
+  /** [C-COMPANY-ZOOM] Enter only while a slice is focused (2D). Never on 3D overview. */
   function enterCompanyZoom(c) {
     if (!companyFocus || !viewport || !c) return;
+    if (state.focusLayer == null) return;
+    cancelPendingZoom();
     if (zoomExitTimer != null) {
       clearTimeout(zoomExitTimer);
       zoomExitTimer = null;
@@ -106,6 +151,7 @@ export function createUI(sceneApi) {
     // Keep small float panel in sync but visually demoted while zoomed.
     renderDetail(c);
     requestAnimationFrame(() => {
+      if (state.focusLayer == null || state.selectedId !== c.id) return;
       viewport.classList.add("company-zoom");
       companyFocus.classList.add("is-open");
       zoomOpen = true;
@@ -114,6 +160,7 @@ export function createUI(sceneApi) {
 
   /** [C-COMPANY-ZOOM] Exit: reverse scale; hide stage after transition (interruptible). */
   function exitCompanyZoom() {
+    cancelPendingZoom();
     if (!companyFocus || !viewport) return;
     if (!zoomOpen && companyFocus.hidden) return;
     const token = ++zoomToken;
@@ -128,6 +175,17 @@ export function createUI(sceneApi) {
       companyFocus.setAttribute("aria-hidden", "true");
       companyFocusBody.innerHTML = "";
     }, ZOOM_MS);
+  }
+
+  /** After overview pick/search: let C-PULL start, then open company stage on the focused slice. */
+  function scheduleCompanyZoomFromOverview(c) {
+    cancelPendingZoom();
+    const id = c.id;
+    pendingZoomTimer = setTimeout(() => {
+      pendingZoomTimer = null;
+      if (state.selectedId !== id || state.focusLayer == null) return;
+      enterCompanyZoom(c);
+    }, OVERVIEW_TO_ZOOM_MS);
   }
 
   if (companyFocusClose) {
@@ -180,6 +238,18 @@ export function createUI(sceneApi) {
     });
   }
 
+  syncBriefChip();
+  syncDetailPanelVisibility();
+
+  if (briefToggle) {
+    briefToggle.addEventListener("click", () => {
+      briefOn = !briefOn;
+      syncBriefChip();
+      if (briefOn && state.focusLayer != null) fillFocusDetail();
+      syncDetailPanelVisibility();
+    });
+  }
+
   document.querySelectorAll(".chip[data-filter]").forEach((btn) => {
     btn.addEventListener("click", () => {
       state.filterMode = btn.dataset.filter;
@@ -190,6 +260,7 @@ export function createUI(sceneApi) {
       updateStatus();
       writeHash();
       if (state.focusLayer != null) renderLayerRoster(state.focusLayer);
+      syncDetailPanelVisibility();
     });
   });
 
@@ -199,6 +270,7 @@ export function createUI(sceneApi) {
     setDetailDefault();
     updateStatus();
     writeHash();
+    syncDetailPanelVisibility();
   });
 
   // [C-STDVIEW]
@@ -273,13 +345,25 @@ export function createUI(sceneApi) {
       hoverTip.style.left = `${local.x}px`;
       hoverTip.style.top = `${local.y}px`;
     },
-    onSelect(c) {
+    onSelect(c, meta = {}) {
       syncLayerActive();
-      enterCompanyZoom(c);
       updateStatus();
       writeHash();
       results.innerHTML = "";
       hoverTip.hidden = true;
+      // 3D overview never shows C-COMPANY-ZOOM; open stage only on focused slice (2D).
+      if (state.focusLayer == null) {
+        exitCompanyZoom();
+        syncDetailPanelVisibility();
+        return;
+      }
+      if (meta.fromOverview) {
+        renderLayerRoster(state.focusLayer);
+        scheduleCompanyZoomFromOverview(c);
+      } else {
+        enterCompanyZoom(c);
+      }
+      syncDetailPanelVisibility();
     },
     onFocusChange() {
       syncLayerActive();
@@ -288,6 +372,7 @@ export function createUI(sceneApi) {
       else setDetailDefault();
       updateStatus();
       writeHash();
+      syncDetailPanelVisibility();
     },
     onClear() {
       syncLayerActive();
@@ -296,6 +381,7 @@ export function createUI(sceneApi) {
       updateStatus();
       writeHash();
       hoverTip.hidden = true;
+      syncDetailPanelVisibility();
     },
     onReset() {
       syncLayerActive();
@@ -303,11 +389,13 @@ export function createUI(sceneApi) {
       setDetailDefault();
       updateStatus();
       writeHash();
+      syncDetailPanelVisibility();
     },
     hydrateFromHash() {
       document.querySelectorAll(".chip[data-filter]").forEach((b) => {
         b.classList.toggle("active", b.dataset.filter === state.filterMode);
       });
+      syncBriefChip();
       syncLayerActive();
       sceneApi.applyVisibility();
       if (state.selectedId != null) {
@@ -320,6 +408,7 @@ export function createUI(sceneApi) {
       if (state.focusLayer != null) renderLayerRoster(state.focusLayer);
       else setDetailDefault();
       updateStatus();
+      syncDetailPanelVisibility();
     },
   };
 }

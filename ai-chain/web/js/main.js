@@ -30,7 +30,7 @@ async function boot() {
     const viewport = document.getElementById("viewport");
     let ui;
     const sceneApi = createScene(viewport, {
-      onSelect: (c) => ui?.onSelect(c),
+      onSelect: (c, meta) => ui?.onSelect(c, meta),
       onFocusChange: () => ui?.onFocusChange(),
       onClear: () => ui?.onClear(),
       onReset: () => ui?.onReset(),
