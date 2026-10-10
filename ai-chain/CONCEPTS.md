@@ -65,7 +65,7 @@
 | **C-AXIS-X** | **x** | **x** 轴 | Right / left on the face. **+x** right, **−x** left. **1 x-unit = `UNIT`**. Face spans **x∈[0,10]**. Three.js **−Z** via `USER_X_SIGN = -1`. |
 | **C-ORIGIN** | user origin | 用户原点 | Corner **(s, x, y)=(0, 0, 0)**. Three: `(−halfStack, −FACE/2, +FACE/2)`. |
 | **C-VIEW-SPACE** | view space | 视空间 / 视野球 | Sphere about **C-ORIGIN**, radius **R** in user units (default **200**; `1 s = 1 x = 1 y`). Farthest camera pull-back vs OrbitControls `target` is `R · UNIT` (always **UNIT**, never multiply by **d**). Not drawn. Not axis length. | `LAYOUT.viewSpace`, `viewSpaceMeters`, `controls.maxDistance` |
-| **C-MAP** | user → Three | 用户→引擎映射 | `coordToLocal` / `userToWorld`: `X += s·gap`, `Y += y·UNIT`, `Z += USER_X_SIGN·x·UNIT`, then `root.localToWorld` (honors Q/E yaw). `UNIT = FACE/10`; `gap = d·UNIT`. |
+| **C-MAP** | user → Three | 用户→引擎映射 | `coordToLocal` / `userToWorld`: `X += s·gap`, `Y += y·UNIT`, `Z += USER_X_SIGN·x·UNIT`, then `root.localToWorld`. `UNIT = FACE/10`; `gap = d·UNIT`. |
 | **C-COORD** | position coordinate | 1类坐标 / 位置坐标 | User `(s, x, y)`. The only placement in the cube. `x` and `y` mean only this pair. A focused slice stays; `sliceAnchor` shifts the rest along **−x**. Company `coord` is the face position. |
 | **C-COORD-2** | relative coordinate | 2类坐标 / 相对坐标 | Ring placement `ringCos` / `ringSin`. Not called `x` or `y`. `companyCoord` projects them into 位置坐标. |
 | **C-COORD-3** | industry coordinate | 3类坐标 / 行业坐标 | One industry code per company (optional). **Authoritative:** Bloomberg BICS Equity Hierarchy 2024 compact `bicsCode` (length `2×level`, levels 1–7). **Product field** `legalEntityCoord`: stored as fixed **7×2** hyphenated segments, right-pad `00` for shallow leaves (e.g. leaf L4 → `10-10-13-12-00-00-00`). **If the winning membership has empty `% Tot Rev`**, the **entity** coord in list API is `'-'` + that 7×2 (e.g. `-50-12-10-10-00-00-00`); hierarchy **node** coords stay unsigned. **Gate / list chrome shows the first 4 groups only** and **keeps a leading `-`** (`-50-12-10-10`); L5–L7 including pad `00` are hidden, not deleted. Empty `%` is not 100. May hang a non-leaf code (= coarser class). Library: `class-3-coords/BICS-Classification/`. **Not a position, not drawn on the cube.** |
@@ -92,7 +92,7 @@ Position changes go through `ai-chain/web/js/coords.js` (`LAYOUT`, or an object'
 | ID | EN | 中 | State field / 字段 | Behavior / 行为 |
 |----|----|----|-------------------|-----------------|
 | **C-FOCUS** | focused slice | 焦点切片 | `state.focusLayer = i \| null` | One slice stays put; the rest of the cube shifts along **−x** (left) and fades. |
-| **C-SELECT** | selected company | 选中公司 | `state.selectedId` | Stronger emissive; enters **C-COMPANY-ZOOM** only when a slice is already focused (2D). From overview (3D), select first sets **C-FOCUS** on that company's slice, then opens zoom. Esc clears this first. |
+| **C-SELECT** | selected company | 选中公司 | `state.selectedId` | Stronger emissive; enters **C-COMPANY-ZOOM** only when a slice is already focused (2D). From overview (3D), select first sets **C-FOCUS** on that company's slice, then opens zoom. Via search result: also **C-STDVIEW** to that slice, zoom opens after the camera lands. Esc clears this first. |
 | **C-COMPANY-ZOOM** | company focus stage | 公司放大聚焦 | `#viewport.company-zoom` + `#companyFocus` | **2D only** (`focusLayer != null`). Never while overview (3D). On select in a focused slice: canvas scales from bottom-left so a scene corner stays top-right; company fields fill the opened blank (glass). If `bondSchedule` exists, a bottom sparkline (time × $bn) shows total / principal / interest. Close via ×, blank glass, or Esc; reverse transition back to prior framing (camera held). |
 | **C-HOVER** | hover | 悬停 | `state.hoverId` | Tooltip only. |
 | **C-DIM** | off-focus fade | 离焦淡出 / 抽回淡入 | — | Non-focus slices fade to opacity 0. Retract fades back to resting opacity on the same lerp as exit. Materials stay `transparent` while fading. |
@@ -113,15 +113,15 @@ Position changes go through `ai-chain/web/js/coords.js` (`LAYOUT`, or an object'
 | **C-RETRACT** | retract | 抽回 | Focus cleared; the cube eases back along **+x** and fades in on the same timing as exit fade-out (`lerpPullOut` + `lerpVisibility`). **Camera must not auto-yaw toward origin.** | `focusSlice` toggle / `clearFocus` |
 | **C-PULL-ZONE** | pull-frame hit zone | 抽出点击区 | Square∖disk on slice face: inside 1×1 square, **outside** outermost concentric ring. Misses inside the ring do **not** toggle focus. Tested in user `(s, x, y)`. | `isPullFrameHit`, `LAYOUT.ringRadius` |
 | **C-FOCUS-ACT** | focus slice | 聚焦切片 | Set `focusLayer`; the slice stays, the cube exits. Via plane click, `[` `]`, or pick/search a company on that slice. No permanent layer-list chrome. | `focusSlice` |
-| **C-PICK** | pick company | 点选公司 | Raycast sphere → select + focus its layer; **C-COMPANY-ZOOM** only after slice focus (from overview: pull to 2D first, then open stage). Plane / pull-zone → **C-FOCUS** only (no company zoom). Camera held (no pick framing dolly). | `pick`, `selectCompany` |
-| **C-STDVIEW** | standard view | 标准视角 | Snap camera to canonical pose for current focus state. Hotkey **C** / button / middle-click. | `goStandardView`, `standardPose` |
+| **C-PICK** | pick company | 点选公司 | Raycast sphere → select + focus its layer; **C-COMPANY-ZOOM** only after slice focus (from overview: pull to 2D first, then open stage). Plane / pull-zone → **C-FOCUS** only (no company zoom). Sphere pick / roster row: camera held (no pick framing dolly). | `pick`, `selectCompany` |
+| **C-STDVIEW** | standard view | 标准视角 | Snap camera to canonical pose for current focus state. Button / middle-click. | `goStandardView`, `standardPose` |
 | **C-RESET** | reset view | 重置 | Clear focus/select; go standard overview pose. | `resetCamera` |
 
 **Camera rule / 相机约定** `[C-CAM-HOLD]`  
-Changing or clearing slice focus **must not** animate orbit target into the cube interior. Only **C-STDVIEW** / **C-RESET** may move the camera. Company pick holds the camera; **C-COMPANY-ZOOM** (CSS stage) runs only on a focused slice (2D), never on 3D overview.
+Changing or clearing slice focus **must not** animate orbit target into the cube interior. Only **C-STDVIEW** / **C-RESET** may move the camera. Company pick holds the camera, except a **search-result** pick, which runs **C-STDVIEW** to the company's focused slice; **C-COMPANY-ZOOM** (CSS stage) runs only on a focused slice (2D), never on 3D overview.
 
 **View space / 视空间** `[C-VIEW-SPACE]`  
-Orbit dolly (wheel / **R·F**) clamps at `controls.maxDistance = LAYOUT.viewSpace.radius · UNIT`. Standard poses stay inside the ball (`‖overview‖≈38 < 200`). This edition limits distance to `target`, not a hard shell about the origin after pan.
+Orbit dolly (wheel) clamps at `controls.maxDistance = LAYOUT.viewSpace.radius · UNIT`. Standard poses stay inside the ball (`‖overview‖≈38 < 200`). This edition limits distance to `target`, not a hard shell about the origin after pan.
 
 ---
 
@@ -146,10 +146,7 @@ Removed / 已废弃：旧「角视图 corner view」与 **V / Home** 绑定（�
 | Right-drag | orbit (fine; low rotateSpeed) | — |
 | Scroll | exponential dolly | — |
 | Middle-click | **C-STDVIEW** | standard view |
-| **C** | **C-STDVIEW** | 标准视角 |
-| **Q / E** | yaw whole `root` | — |
-| **W A S D** | pan | — |
-| **R / F** | dolly | — |
+| **← ↑ ↓ →** | pan (**Shift** faster) | — |
 | **[ / ]** | prev/next focus slice | **C-FOCUS-ACT** + **C-PULL** |
 | **Esc** | layered clear | **C-ESC** |
 | **?** | help overlay | Default **closed**; chrome is floating over the full-bleed cube (no solid sidebars) |
@@ -207,7 +204,7 @@ Removed / 已废弃：旧「角视图 corner view」与 **V / Home** 绑定（�
 
 1. 1类坐标 / 位置坐标 is **`(s, x, y)`**, not raw Three XYZ. `x` and `y` mean only this. Move things by editing coordinates in `coords.js`. 2类坐标 / 相对坐标 is `ringCos` / `ringSin`. 3类坐标 / 行业坐标 is `legalEntityCoord`（BICS **存储** 7×2，库在 `class-3-coords/BICS-Classification/`；企业主业空占比时名单坐标加 `-`；**闸门与名单 chrome 只画前 4 段并保留前导 `-`**），不参与摆放。  
 2. Focus keeps the slice. The rest of the cube exits along user **−x** (left) only, by `cubeExitX`. Do not call 「左」 **−s**. Do not move the focused slice.  
-3. Focus change / retract → **hold camera** (`C-CAM-HOLD`).  
+3. Focus change / retract → **hold camera** (`C-CAM-HOLD`). Exception: search-result pick → **C-STDVIEW** on the company's slice.  
 4. Standard overview / focused poses stay as §5 until explicitly revised.  
 5. Dimmed points need `transparent: true` or opacity is ignored.  
 6. Labels stay **coplanar** on the slice (no CSS2D billboard).  
@@ -238,7 +235,7 @@ Removed / 已废弃：旧「角视图 corner view」与 **V / Home** 绑定（�
 | `web/js/ui.js` | Panels / status / buttons |
 
 **One-liner resume / 一句话续工**  
-立方体 = 沿 **s** 堆的 **切片**；位置一律 **(s, x, y)**；面 **x,y∈[0,10]**；**1 s = 1 x = 1 y = UNIT**；右=+x 左=−x 上=+y 下=−y 前=+s 后=−s；焦点切片不动，离焦立方体沿 **−x** 左移淡出；**C** = 标准视角；切层/抽回不扭相机。
+立方体 = 沿 **s** 堆的 **切片**；位置一律 **(s, x, y)**；面 **x,y∈[0,10]**；**1 s = 1 x = 1 y = UNIT**；右=+x 左=−x 上=+y 下=−y 前=+s 后=−s；焦点切片不动，离焦立方体沿 **−x** 左移淡出；Standard 按钮 / 中键 = 标准视角；切层/抽回不扭相机。
 
 ---
 

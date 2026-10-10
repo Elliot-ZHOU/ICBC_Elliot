@@ -8,6 +8,7 @@ import {
 } from "./state.js";
 import { formatCoord } from "./coords.js";
 import { bondChartHtml } from "./bondChart.js";
+import { STDVIEW_MS } from "./scene.js";
 
 const ZOOM_MS = 450;
 
@@ -87,12 +88,12 @@ export function createUI(sceneApi) {
     if (state.focusLayer != null) {
       const L = state.layers[state.focusLayer];
       const n = vis.filter((c) => c.layer === state.focusLayer).length;
-      statusBar.textContent = `Slice ${state.focusLayer + 1}: ${L.name} · slice stays · cube exits −x (left) · ${n} visible · C face-on · Esc clears`;
+      statusBar.textContent = `Slice ${state.focusLayer + 1}: ${L.name} · slice stays · cube exits −x (left) · ${n} visible · Esc clears`;
     } else {
       const gate = state.bicsCode
         ? ` · BICS L${state.bicsLevel || "?"} ${state.bicsCode}${state.bicsName ? " " + state.bicsName : ""}`
         : "";
-      statusBar.textContent = `All slices · ${vis.length} visible · C standard · click plane or [ ] to focus${gate}`;
+      statusBar.textContent = `All slices · ${vis.length} visible · click plane or [ ] to focus${gate}`;
     }
   }
 
@@ -177,15 +178,15 @@ export function createUI(sceneApi) {
     }, ZOOM_MS);
   }
 
-  /** After overview pick/search: let C-PULL start, then open company stage on the focused slice. */
-  function scheduleCompanyZoomFromOverview(c) {
+  /** Deferred stage open: after overview pick (C-PULL) or after the search-path C-STDVIEW move. */
+  function scheduleCompanyZoom(c, delayMs) {
     cancelPendingZoom();
     const id = c.id;
     pendingZoomTimer = setTimeout(() => {
       pendingZoomTimer = null;
       if (state.selectedId !== id || state.focusLayer == null) return;
       enterCompanyZoom(c);
-    }, OVERVIEW_TO_ZOOM_MS);
+    }, delayMs);
   }
 
   if (companyFocusClose) {
@@ -311,7 +312,7 @@ export function createUI(sceneApi) {
           const b = document.createElement("button");
           b.type = "button";
           b.textContent = `${c.name}${c.ticker ? "  " + c.ticker : ""}`;
-          b.addEventListener("click", () => sceneApi.selectCompany(c.id));
+          b.addEventListener("click", () => sceneApi.selectCompany(c.id, { standardView: true }));
           results.appendChild(b);
         });
     }, 120);
@@ -357,9 +358,14 @@ export function createUI(sceneApi) {
         syncDetailPanelVisibility();
         return;
       }
-      if (meta.fromOverview) {
+      if (meta.standardView) {
+        // Search path: square up first, then magnify (stage waits for the camera).
+        exitCompanyZoom();
         renderLayerRoster(state.focusLayer);
-        scheduleCompanyZoomFromOverview(c);
+        scheduleCompanyZoom(c, STDVIEW_MS);
+      } else if (meta.fromOverview) {
+        renderLayerRoster(state.focusLayer);
+        scheduleCompanyZoom(c, OVERVIEW_TO_ZOOM_MS);
       } else {
         enterCompanyZoom(c);
       }

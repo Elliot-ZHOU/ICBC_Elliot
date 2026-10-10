@@ -115,7 +115,7 @@ export function createScene(viewport, hooks = {}) {
 
   function tick() {
     requestAnimationFrame(tick);
-    // Farther orbit radius → higher angular speed so on-screen spin matches Q/E better
+    // Farther orbit radius → higher angular speed so on-screen spin stays even
     const dist = camera.position.distanceTo(controls.target);
     const ref = Math.max(6, framingDistance());
     // Mild distance scale only — keep fine control (avoid multi-turn flicks)
@@ -141,7 +141,7 @@ export function createScene(viewport, hooks = {}) {
     goStandardView: () => goStandardView(ctx, true),
     focusSlice: (i) => focusSlice(ctx, i),
     clearFocus: () => clearFocus(ctx),
-    selectCompany: (id) => selectCompany(ctx, id),
+    selectCompany: (id, opts) => selectCompany(ctx, id, opts),
     framingDistance: () => framingDistance(),
   };
 }
@@ -643,7 +643,7 @@ function framingDistance() {
   return Math.max(7.2, Math.hypot(span, FACE) * 1.15);
 }
 
-/** [C-MAP] User (s, x, y) → world Three.js, including root yaw. */
+/** [C-MAP] User (s, x, y) → world Three.js via root. */
 function userToWorld(ctx, coord) {
   return ctx.root.localToWorld(v3(coordToLocal(coord, N_LAYERS(), gapNow())));
 }
@@ -692,11 +692,14 @@ function stepCamAnim(ctx) {
 }
 
 
+/** [C-STDVIEW] Camera animation length; ui.js waits this long before search-path zoom. */
+export const STDVIEW_MS = 520;
+
 /** [C-STDVIEW] Snap to standardPose for current focus state. */
 function goStandardView(ctx, animate = true) {
   const { pos, target } = standardPose(ctx);
   ctx.camAnim = null;
-  if (animate) startCamAnim(ctx, pos, target, 520);
+  if (animate) startCamAnim(ctx, pos, target, STDVIEW_MS);
   else {
     ctx.camera.position.copy(pos);
     ctx.controls.target.copy(target);
@@ -766,7 +769,7 @@ function clearFocus(ctx) {
   ctx.hooks.onClear?.();
 }
 
-function selectCompany(ctx, id) {
+function selectCompany(ctx, id, opts = {}) {
   const c = companyById(id);
   if (!c) return;
   // Overview (no focus) = 3D: land on the company's slice first; zoom only after 2D.
@@ -774,10 +777,16 @@ function selectCompany(ctx, id) {
   state.selectedId = id;
   state.focusLayer = c.layer;
   ctx.exitStayLayer = c.layer;
-  // [C-COMPANY-ZOOM] Hold camera; stage zoom is CSS from bottom-left (ui.js), 2D only.
+  // [C-CAM-HOLD] Hold camera by default; only the search path runs [C-STDVIEW] (2D only).
   ctx.camAnim = null;
   ctx.controls.enabled = false;
   queueVisibilityTargets(ctx);
+  if (opts.standardView) {
+    // After focusLayer update so standardPose targets the new slice.
+    goStandardView(ctx, true);
+    ctx.hooks.onSelect?.(c, { fromOverview, standardView: true });
+    return;
+  }
   ctx.hooks.onSelect?.(c, { fromOverview });
 }
 
@@ -863,11 +872,7 @@ function lerpVisibility(ctx) {
 }
 
 function applyKeyboard(ctx) {
-  const { keys, camera, controls, root } = ctx;
-  const yawSpeed = 0.035;
-  if (keys.has("q")) root.rotation.y += yawSpeed;
-  if (keys.has("e")) root.rotation.y -= yawSpeed;
-
+  const { keys, camera, controls } = ctx;
   const fast = keys.has("shift");
   const panSpeed = fast ? 0.22 : 0.12;
   const right = new THREE.Vector3();
@@ -875,20 +880,10 @@ function applyKeyboard(ctx) {
   right.setFromMatrixColumn(camera.matrix, 0);
   up.setFromMatrixColumn(camera.matrix, 1);
   const delta = new THREE.Vector3();
-  if (keys.has("a") || keys.has("arrowleft")) delta.addScaledVector(right, -panSpeed);
-  if (keys.has("d") || keys.has("arrowright")) delta.addScaledVector(right, panSpeed);
-  if (keys.has("w") || keys.has("arrowup")) delta.addScaledVector(up, panSpeed);
-  if (keys.has("s") || keys.has("arrowdown")) delta.addScaledVector(up, -panSpeed);
-  // R / F — dolly toward / away from orbit target (same axis as wheel, scale with distance)
-  if (keys.has("r") || keys.has("f")) {
-    const offset = camera.position.clone().sub(controls.target);
-    const dist = Math.max(offset.length(), 0.35);
-    const dir = offset.multiplyScalar(1 / dist);
-    const step = (keys.has("r") ? -1 : 1) * panSpeed * Math.max(dist, 1.2) * 0.085;
-    let newDist = dist + step;
-    newDist = Math.min(controls.maxDistance, Math.max(controls.minDistance, newDist));
-    camera.position.copy(controls.target).addScaledVector(dir, newDist);
-  }
+  if (keys.has("arrowleft")) delta.addScaledVector(right, -panSpeed);
+  if (keys.has("arrowright")) delta.addScaledVector(right, panSpeed);
+  if (keys.has("arrowup")) delta.addScaledVector(up, panSpeed);
+  if (keys.has("arrowdown")) delta.addScaledVector(up, -panSpeed);
   if (delta.lengthSq() > 0) {
     camera.position.add(delta);
     controls.target.add(delta);
@@ -899,7 +894,7 @@ function wireInput(ctx, viewport) {
   const el = ctx.renderer.domElement;
   el.addEventListener("contextmenu", (e) => e.preventDefault()); // right-drag = rotate
 
-  // Wheel: exponential dolly toward target — wide min/max like R/F reach
+  // Wheel: exponential dolly toward target — wide min/max
   el.addEventListener(
     "wheel",
     (e) => {
@@ -919,7 +914,6 @@ function wireInput(ctx, viewport) {
 
   window.addEventListener("keydown", (e) => {
     const k = e.key.toLowerCase();
-    if (["q", "e", "w", "a", "s", "d", "r", "f", "c"].includes(k)) e.preventDefault();
     if (e.key === "Shift") ctx.keys.add("shift");
     else ctx.keys.add(k);
     if (e.key === "[" || e.key === "]") {
@@ -928,10 +922,6 @@ function wireInput(ctx, viewport) {
       const n = N_LAYERS();
       const cur = state.focusLayer == null ? Math.round(n / 2) : state.focusLayer;
       focusSlice(ctx, Math.max(0, Math.min(n - 1, cur + step)));
-    }
-    if (k === "c") {
-      e.preventDefault();
-      goStandardView(ctx, true);
     }
     if (e.key === "Escape") {
       e.preventDefault();
