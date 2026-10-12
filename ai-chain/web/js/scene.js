@@ -643,9 +643,19 @@ function framingDistance() {
   return Math.max(7.2, Math.hypot(span, FACE) * 1.15);
 }
 
-/** [C-MAP] User (s, x, y) → world Three.js via root. */
+/** [C-MAP] User (s, x, y) → world Three.js, including root yaw. */
 function userToWorld(ctx, coord) {
   return ctx.root.localToWorld(v3(coordToLocal(coord, N_LAYERS(), gapNow())));
+}
+
+/** True when focus is in a typing / form control — cube hotkeys must not steal keys. */
+function isEditableFocus() {
+  const el = document.activeElement;
+  if (!el || el === document.body || el === document.documentElement) return false;
+  const tag = el.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return true;
+  if (el.isContentEditable) return true;
+  return Boolean(el.closest?.("[contenteditable='true'], [contenteditable='']"));
 }
 
 /**
@@ -872,7 +882,15 @@ function lerpVisibility(ctx) {
 }
 
 function applyKeyboard(ctx) {
-  const { keys, camera, controls } = ctx;
+  if (isEditableFocus()) {
+    ctx.keys.clear();
+    return;
+  }
+  const { keys, camera, controls, root } = ctx;
+  const yawSpeed = 0.035;
+  if (keys.has("q")) root.rotation.y += yawSpeed;
+  if (keys.has("e")) root.rotation.y -= yawSpeed;
+
   const fast = keys.has("shift");
   const panSpeed = fast ? 0.22 : 0.12;
   const right = new THREE.Vector3();
@@ -880,10 +898,20 @@ function applyKeyboard(ctx) {
   right.setFromMatrixColumn(camera.matrix, 0);
   up.setFromMatrixColumn(camera.matrix, 1);
   const delta = new THREE.Vector3();
-  if (keys.has("arrowleft")) delta.addScaledVector(right, -panSpeed);
-  if (keys.has("arrowright")) delta.addScaledVector(right, panSpeed);
-  if (keys.has("arrowup")) delta.addScaledVector(up, panSpeed);
-  if (keys.has("arrowdown")) delta.addScaledVector(up, -panSpeed);
+  if (keys.has("a") || keys.has("arrowleft")) delta.addScaledVector(right, -panSpeed);
+  if (keys.has("d") || keys.has("arrowright")) delta.addScaledVector(right, panSpeed);
+  if (keys.has("w") || keys.has("arrowup")) delta.addScaledVector(up, panSpeed);
+  if (keys.has("s") || keys.has("arrowdown")) delta.addScaledVector(up, -panSpeed);
+  // R / F — dolly toward / away from orbit target (same axis as wheel, scale with distance)
+  if (keys.has("r") || keys.has("f")) {
+    const offset = camera.position.clone().sub(controls.target);
+    const dist = Math.max(offset.length(), 0.35);
+    const dir = offset.multiplyScalar(1 / dist);
+    const step = (keys.has("r") ? -1 : 1) * panSpeed * Math.max(dist, 1.2) * 0.085;
+    let newDist = dist + step;
+    newDist = Math.min(controls.maxDistance, Math.max(controls.minDistance, newDist));
+    camera.position.copy(controls.target).addScaledVector(dir, newDist);
+  }
   if (delta.lengthSq() > 0) {
     camera.position.add(delta);
     controls.target.add(delta);
@@ -894,7 +922,7 @@ function wireInput(ctx, viewport) {
   const el = ctx.renderer.domElement;
   el.addEventListener("contextmenu", (e) => e.preventDefault()); // right-drag = rotate
 
-  // Wheel: exponential dolly toward target — wide min/max
+  // Wheel: exponential dolly toward target — wide min/max like R/F reach
   el.addEventListener(
     "wheel",
     (e) => {
@@ -913,7 +941,12 @@ function wireInput(ctx, viewport) {
   );
 
   window.addEventListener("keydown", (e) => {
+    if (isEditableFocus()) {
+      ctx.keys.clear();
+      return;
+    }
     const k = e.key.toLowerCase();
+    if (["q", "e", "w", "a", "s", "d", "r", "f", "c"].includes(k)) e.preventDefault();
     if (e.key === "Shift") ctx.keys.add("shift");
     else ctx.keys.add(k);
     if (e.key === "[" || e.key === "]") {
@@ -923,6 +956,10 @@ function wireInput(ctx, viewport) {
       const cur = state.focusLayer == null ? Math.round(n / 2) : state.focusLayer;
       focusSlice(ctx, Math.max(0, Math.min(n - 1, cur + step)));
     }
+    if (k === "c") {
+      e.preventDefault();
+      goStandardView(ctx, true);
+    }
     if (e.key === "Escape") {
       e.preventDefault();
       clearFocus(ctx);
@@ -931,6 +968,15 @@ function wireInput(ctx, viewport) {
   window.addEventListener("keyup", (e) => {
     if (e.key === "Shift") ctx.keys.delete("shift");
     else ctx.keys.delete(e.key.toLowerCase());
+  });
+  // Drop held keys when focus enters a typing control (avoids sticky pan/yaw).
+  document.addEventListener("focusin", (e) => {
+    const t = e.target;
+    if (!t) return;
+    const tag = t.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || t.isContentEditable) {
+      ctx.keys.clear();
+    }
   });
 
   el.addEventListener("pointerdown", (e) => {

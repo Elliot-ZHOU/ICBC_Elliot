@@ -114,7 +114,7 @@ Position changes go through `ai-chain/web/js/coords.js` (`LAYOUT`, or an object'
 | **C-PULL-ZONE** | pull-frame hit zone | 抽出点击区 | Square∖disk on slice face: inside 1×1 square, **outside** outermost concentric ring. Misses inside the ring do **not** toggle focus. Tested in user `(s, x, y)`. | `isPullFrameHit`, `LAYOUT.ringRadius` |
 | **C-FOCUS-ACT** | focus slice | 聚焦切片 | Set `focusLayer`; the slice stays, the cube exits. Via plane click, `[` `]`, or pick/search a company on that slice. No permanent layer-list chrome. | `focusSlice` |
 | **C-PICK** | pick company | 点选公司 | Raycast sphere → select + focus its layer; **C-COMPANY-ZOOM** only after slice focus (from overview: pull to 2D first, then open stage). Plane / pull-zone → **C-FOCUS** only (no company zoom). Sphere pick / roster row: camera held (no pick framing dolly). | `pick`, `selectCompany` |
-| **C-STDVIEW** | standard view | 标准视角 | Snap camera to canonical pose for current focus state. Button / middle-click. | `goStandardView`, `standardPose` |
+| **C-STDVIEW** | standard view | 标准视角 | Snap camera to canonical pose for current focus state. Button / middle-click / **C**. | `goStandardView`, `standardPose` |
 | **C-RESET** | reset view | 重置 | Clear focus/select; go standard overview pose. | `resetCamera` |
 
 **Camera rule / 相机约定** `[C-CAM-HOLD]`  
@@ -146,7 +146,10 @@ Removed / 已废弃：旧「角视图 corner view」与 **V / Home** 绑定（�
 | Right-drag | orbit (fine; low rotateSpeed) | — |
 | Scroll | exponential dolly | — |
 | Middle-click | **C-STDVIEW** | standard view |
-| **← ↑ ↓ →** | pan (**Shift** faster) | — |
+| **C** | **C-STDVIEW** | 标准视角 |
+| **Q / E** | yaw whole `root` | — |
+| **W A S D** / **← ↑ ↓ →** | pan (**Shift** faster) | — |
+| **R / F** | dolly | — |
 | **[ / ]** | prev/next focus slice | **C-FOCUS-ACT** + **C-PULL** |
 | **Esc** | layered clear | **C-ESC** |
 | **?** | help overlay | Default **closed**; chrome is floating over the full-bleed cube (no solid sidebars) |
@@ -154,6 +157,8 @@ Removed / 已废弃：旧「角视图 corner view」与 **V / Home** 绑定（�
 | Click slice **frame** (square∖ring) | focus/toggle that slice | **C-FOCUS-ACT** / **C-PULL-ZONE** |
 | Double-click empty | clear focus | **C-RETRACT** path |
 | Click company point | select | **C-PICK** |
+
+Hotkeys (letters, arrows, `[` `]`, `?`, Esc) are **off** while focus is in an editable control (`input` / `textarea` / `select` / `contenteditable`), so typing (e.g. search) does not move the camera.
 
 ---
 
@@ -235,7 +240,7 @@ Removed / 已废弃：旧「角视图 corner view」与 **V / Home** 绑定（�
 | `web/js/ui.js` | Panels / status / buttons |
 
 **One-liner resume / 一句话续工**  
-立方体 = 沿 **s** 堆的 **切片**；位置一律 **(s, x, y)**；面 **x,y∈[0,10]**；**1 s = 1 x = 1 y = UNIT**；右=+x 左=−x 上=+y 下=−y 前=+s 后=−s；焦点切片不动，离焦立方体沿 **−x** 左移淡出；Standard 按钮 / 中键 = 标准视角；切层/抽回不扭相机。
+立方体 = 沿 **s** 堆的 **切片**；位置一律 **(s, x, y)**；面 **x,y∈[0,10]**；**1 s = 1 x = 1 y = UNIT**；右=+x 左=−x 上=+y 下=−y 前=+s 后=−s；焦点切片不动，离焦立方体沿 **−x** 左移淡出；**C** / Standard 按钮 / 中键 = 标准视角；输入框聚焦时快捷键关闭；切层/抽回不扭相机。
 
 ---
 

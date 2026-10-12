@@ -324,6 +324,16 @@ export function createUI(sceneApi) {
   });
   window.addEventListener("keydown", (e) => {
     if (e.key === "?" || (e.key === "/" && e.shiftKey)) {
+      const ae = document.activeElement;
+      if (
+        ae &&
+        (ae.tagName === "INPUT" ||
+          ae.tagName === "TEXTAREA" ||
+          ae.tagName === "SELECT" ||
+          ae.isContentEditable)
+      ) {
+        return;
+      }
       e.preventDefault();
       helpToggle.click();
     }
