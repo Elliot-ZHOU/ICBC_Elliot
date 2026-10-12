@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FIDV 改动纪要 · worklog #110–#148</title>
+<style>
+  :root {
+    --ink: #1a1f26;
+    --muted: #4a5560;
+    --rule: #c5ccd4;
+    --paper: #f7f5f0;
+    --fill: #ece8e0;
+  }
+  * { box-sizing: border-box; }
+  html { font-size: 11pt; }
+  body {
+    margin: 0 auto;
+    max-width: 180mm;
+    padding: 16mm 16mm 22mm;
+    color: var(--ink);
+    background: var(--paper);
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Songti SC", "Noto Serif SC", serif;
+    line-height: 1.45;
+  }
+  h1 { font-size: 18pt; letter-spacing: 0.04em; margin: 0 0 0.35em; font-weight: 600; }
+  h2 { font-size: 12.5pt; margin: 1.35em 0 0.4em; border-bottom: 1px solid var(--rule); padding-bottom: 0.2em; font-weight: 600; page-break-after: avoid; break-after: avoid; }
+  h3 { font-size: 11pt; margin: 1em 0 0.3em; font-weight: 600; page-break-after: avoid; break-after: avoid; }
+  p, li { margin: 0.32em 0; }
+  .lede { color: var(--muted); font-size: 10pt; }
+  .cover-meta { margin: 0.8em 0 1.4em; font-size: 10pt; color: var(--muted); }
+  .cover-meta div { margin: 0.15em 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 9.5pt; margin: 0.5em 0 0.8em; page-break-inside: avoid; break-inside: avoid; }
+  table.long { page-break-inside: auto; break-inside: auto; }
+  table.long tr { page-break-inside: avoid; break-inside: avoid; }
+  th, td { border: 1px solid var(--rule); padding: 0.28em 0.45em; text-align: left; vertical-align: top; }
+  th { background: var(--fill); font-weight: 600; }
+  table.kv th { width: 22%; }
+  td.n { white-space: nowrap; width: 3.2em; }
+  code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.88em; }
+  ul, ol { padding-left: 1.2em; }
+  .note { color: var(--muted); font-size: 9pt; }
+  .keep { page-break-inside: avoid; break-inside: avoid; }
+  .cover { padding-top: 58mm; page-break-after: always; break-after: page; }
+  .cover .mark { font-size: 40pt; letter-spacing: 0.08em; font-weight: 600; margin: 0 0 0.2em; }
+  .cover h1 { font-size: 20pt; }
+  .page { page-break-before: always; break-before: page; }
+  .foot { margin-top: 1.8em; font-size: 9pt; color: var(--muted); }
+  .no-print { margin: 0 0 1em; font-size: 10pt; }
+  @media print {
+    body { max-width: none; padding: 0; background: white; }
+    .no-print { display: none; }
+    a { color: inherit; text-decoration: none; }
+  }
+  @page { size: A4; margin: 14mm 14mm 16mm; }
+</style>
+</head>
+<body>
+  <p class="no-print">浏览器打开本页 → 打印 → A4 纵向 → 存储为 PDF。关掉页眉网址。</p>
+
+  <!-- 封面 -->
+  <section class="cover">
+    <p class="mark">FIDV</p>
+    <h1>改动纪要</h1>
+    <p class="lede">自 worklog 第 109 条之后，一共做了哪些优化和修改</p>
+    <div class="cover-meta">
+      <div>范围：worklog <strong>#110 – #148</strong>，共 39 条（2026-10-06 至 2026-10-12）</div>
+      <div>起点：#109 接通本机子代理（不计入）</div>
+      <div>终点：<code>origin/main</code> = <code>d98f289</code></div>
+      <div>依据：<code>library/worklog-003.md</code>、<code>worklog-004.md</code>、<code>worklog-005.md</code>；<code>git log</code> 自 <code>c0d96ab</code> 起。</div>
+    </div>
+  </section>
+
+  <!-- 1 摘要 -->
+  <h2>1. 摘要</h2>
+  <table class="kv">
+    <tr><th>产品改动</th><td>决策立方体（<code>ai-chain/</code>）落地 7 项：克隆即可用、公司放大聚焦、Demo 公司与债务表、债务曲线图、三维与二维交互策略、名单开关 Brief、搜索跳标准视角；键位先删后恢复，并加输入守卫。独立 <code>/slice</code> 页做过后回滚。</td></tr>
+    <tr><th>工作流改动</th><td>公私隔离协议进仓；子代理使用手册出 PDF；<code>progress.md</code> 上下文机制；新设 UI designer、prompt writer 两个只建议角色。后三项是本机工具，不进仓。</td></tr>
+    <tr><th>只建议、未落地</th><td>立方体信息展示整体改版建议（#118）；公司放大面内容瘦身（#133），待业主决定。</td></tr>
+    <tr><th>发布</th><td>产品提交 5 个：<code>c0d96ab</code>、<code>72debbd</code>、<code>62e264b</code>、<code>484a457</code>、<code>6c562a0</code>；另有协议提交 <code>950d7e6</code> 与若干日志提交。见第 5 节。</td></tr>
+    <tr><th>总监</th><td>每次产品代码改动都送审，均为第 1 次送审即通过。</td></tr>
+  </table>
+  <p class="note">进度表里原列的已知问题「焦点在搜索框时 <code>[</code> <code>]</code> <code>?</code> 与方向键仍触发立方体」，已在 #146（<code>6c562a0</code>）一并修掉。</p>
+
+  <!-- 2 产品改动 -->
+  <h2>2. 产品改动（已落地，按最终状态写）</h2>
+
+  <div class="keep">
+  <h3>2.1 克隆后首页有格无公司 → 首次启动自动造库</h3>
+  <p class="lede">#110 · <code>c0d96ab</code> · 2026-10-06</p>
+  <ul>
+    <li>问题：同学从 GitHub 克隆后，首页分类有格子但家数为 0、四级名单空。原因是成员库 <code>bics_entities_20261003.db</code> 不进仓，需本机跑 ingest 生成。</li>
+    <li>修法：启动器 <code>Open-AI-Cube.command</code>（实体 <code>ai-chain/Open-AI-Chain.command</code>）在库缺失、或旧于 <code>DATA-SPACE/</code> xlsx 时，自动装 openpyxl 并跑 ingest；ingest 先写 <code>.tmp</code> 再替换，避免半截库。</li>
+    <li>同步：新增 <code>.gitignore</code>；三脚本设可执行；两份 README 补说明；运维记 <code>ops-log-001.md</code> #2。</li>
+    <li>实测：117255 行入库，首页家数非 0；二次启动跳过 ingest。</li>
+  </ul>
+  </div>
+
+  <div class="keep">
+  <h3>2.2 公司放大聚焦 C-COMPANY-ZOOM</h3>
+  <p class="lede">#120 提需求 · #121 实现 · <code>72debbd</code></p>
+  <ul>
+    <li>选中公司后，画布向左下放大，右上保留原场景一角；空出的左下玻璃面展示公司信息。</li>
+    <li>关闭：× 按钮、点空白玻璃、Esc；反向过渡回原取景，相机不动。</li>
+    <li>美工部定玻璃族与动效量级。改 <code>cube.html</code>、<code>app.css</code>、<code>ui.js</code>、<code>scene.js</code>、<code>CONCEPTS.md</code>。</li>
+  </ul>
+  </div>
+
+  <div class="keep">
+  <h3>2.3 Demo Company 与 30 年债务表、债务曲线图</h3>
+  <p class="lede">#122 提需求 · #123 数据 · #124 图 · <code>72debbd</code></p>
+  <ul>
+    <li>数据：<code>companies.json</code> 新增 Demo Company（id 95），挂第 11 层 Models &amp; customer interface；带 2026 起 30 年逐年本金、利息、本息合计（十亿美元）。</li>
+    <li>后端：<code>db.py</code> 增 <code>bond_schedule</code> 列，API 返回 <code>bondSchedule</code>。seed 后共 96 家公司。</li>
+    <li>前端：新增 <code>bondChart.js</code>，在放大面底部画曲线（横轴年份、纵轴金额）；合计用强调色，本金与利息用细线；无数据则隐藏。</li>
+  </ul>
+  </div>
+
+  <div class="keep">
+  <h3>2.4 三维与二维交互策略（同页）</h3>
+  <p class="lede">#127 提需求 · #128 实现 · #129 独立页 · #130 回滚 · <code>62e264b</code></p>
+  <table>
+    <tr><th>操作</th><th>最终行为</th></tr>
+    <tr><td>三维总览里点切片</td><td>同页抽出该层（C-PULL）进二维，不开公司放大</td></tr>
+    <tr><td>三维总览里点公司</td><td>先切到该公司所在层的二维，约 280 ms 后再开放大面</td></tr>
+    <tr><td>二维里点公司</td><td>直接开放大面</td></tr>
+    <tr><td>三维总览</td><td>任何时候都不出现放大面</td></tr>
+  </table>
+  <p>#129 曾做独立 <code>/slice</code> 二维页（<code>slice.html</code>、<code>slice.js</code>、<code>sliceNav.js</code> 与路由），业主看后于 #130 回滚：页面与路由全删，保留同页策略。现在<strong>没有</strong> <code>/slice</code>。</p>
+  </div>
+
+  <div class="keep">
+  <h3>2.5 名单开关 Brief（C-BRIEF）</h3>
+  <p class="lede">#134 提需求 · #135 实现 · <code>62e264b</code></p>
+  <ul>
+    <li>底栏新增 chip「Brief」，控制二维聚焦时右侧浮动名单面板的显隐。</li>
+    <li>默认<strong>关</strong>（需求稿写默认开，实现时业主定为关）；会话内保持，不写进网址。</li>
+    <li>不影响聚焦、选中和放大面。位置由美工部定在 Reset 之后、间距滑块 d 之前。</li>
+  </ul>
+  </div>
+
+  <div class="keep">
+  <h3>2.6 搜索公司 → 自动跳到该层的标准视角</h3>
+  <p class="lede">#141 提需求 · #142 实现 · <code>484a457</code></p>
+  <ul>
+    <li>只对搜索结果生效：点结果后镜头动画到该公司所在层的二维标准视角（520 ms），落定后再开放大面。</li>
+    <li>点球、点名单行、从网址恢复仍不动镜头（相机约定 C-CAM-HOLD 的唯一例外已写入 <code>CONCEPTS.md</code>）。</li>
+    <li>实测：从三维搜 Constellation，约 544 ms 开放大面；连点只开最后一个。</li>
+  </ul>
+  </div>
+
+  <div class="keep">
+  <h3>2.7 键位：先精简，后恢复并加输入守卫</h3>
+  <p class="lede">#138–#140 删键 · <code>484a457</code> → #144–#146 恢复 · <code>6c562a0</code></p>
+  <p>#140 曾删去 W/A/S/D、Q/E、R/F、C，只留方向键，为的是搜索框能正常打这些字母。#146 改用更好的办法：键全部加回，但只要焦点在可编辑控件里，立方体快捷键整体关闭。最终键位如下。</p>
+  <table>
+    <tr><th>按键</th><th>作用</th></tr>
+    <tr><td>W A S D ／ ← ↑ ↓ →</td><td>平移；Shift 加速</td></tr>
+    <tr><td>Q ／ E</td><td>整体偏航</td></tr>
+    <tr><td>R ／ F</td><td>推近 ／ 拉远</td></tr>
+    <tr><td>C ／ 中键 ／ Standard 按钮</td><td>标准视角</td></tr>
+    <tr><td><code>[</code> <code>]</code></td><td>上一层 ／ 下一层</td></tr>
+    <tr><td>Esc</td><td>分层清除</td></tr>
+    <tr><td><code>?</code></td><td>帮助</td></tr>
+    <tr><td>滚轮</td><td>推拉（不变）</td></tr>
+  </table>
+  <p><strong>输入守卫：</strong>焦点在 <code>input</code>、<code>textarea</code>、<code>select</code> 或可编辑区域时，上表全部按键只用于打字，画面不动；进入输入框时清掉已按住的键，失焦后立即恢复。覆盖搜索框 <code>#search</code>，以后新增输入框也自动覆盖。</p>
+  </div>
+
+  <!-- 3 工作流 -->
+  <h2 class="page">3. 工作流与协作改动</h2>
+  <table class="long">
+    <tr><th>事项</th><th>条目</th><th>结果</th><th>进仓</th></tr>
+    <tr><td>子代理可用性核验</td><td>#110</td><td>八个本机角色逐一调用均应答；说明本地改动须 commit + push 才反映到 GitHub。</td><td>—</td></tr>
+    <tr><td>子代理使用手册</td><td>#111</td><td><code>FIDV-subagent-handbook.html</code> 与 PDF（A4 纵向 10 页）：组织总图、调用法、八角色表、调度矩阵、速查卡。</td><td>是（<code>950d7e6</code>）</td></tr>
+    <tr><td>公私隔离</td><td>#112–#114</td><td>仓根 <code>PUBLIC-PRIVATE.md</code>：工程跟仓走，工作工具跟个人走。<code>agents/</code>、<code>.cursor/</code>、<code>agent_tasklist/</code> 非真源文件停止跟踪（本机文件保留）。提交只按路径加。</td><td>协议进仓（<code>950d7e6</code>）</td></tr>
+    <tr><td>上下文压缩件 <code>progress.md</code></td><td>#113、#115、#126</td><td>仓根本机文件，记业主约定、工程状态、已完成、待办。最终规则：默认不读，只在新对话首次、角色首次呼出或业主点名时读；只在业主下令时更新。</td><td>否（本机）</td></tr>
+    <tr><td>中文回复、沿用原有形式</td><td>#112</td><td>面向业主用中文；改动沿用所在文件的语言与格式；提交信息英文。</td><td>否（本机规则）</td></tr>
+    <tr><td>新角色 UI designer</td><td>#117</td><td>只给布局、层级、交互、动效建议，不改仓；仅点名呼出时派。</td><td>否（本机）</td></tr>
+    <tr><td>新角色 prompt writer</td><td>#119</td><td>把业主需求改写成清晰可复制的 prompt，不改仓；仅点名呼出时派。此后 #120、#122、#127、#134、#138–#139、#141、#144–#145 均先经它定稿再实现。</td><td>否（本机）</td></tr>
+  </table>
+
+  <!-- 4 建议与待决 -->
+  <h2>4. 只建议、未落地</h2>
+  <div class="keep">
+  <h3>4.1 立方体信息展示整体改版（#118，UI designer）</h3>
+  <ul>
+    <li>诊断：全幅立方体 + 右侧单面板硬塞名单与详情 + 底栏堆叠；层列表撤掉后没有替代导航。</li>
+    <li>建议：总览 → 切片 → 公司三级渐进展开；切片窗与公司窗分开，Esc 逐层关；立方体只做空间索引与联动高亮。</li>
+    <li>后续已部分吸收：公司放大面（2.2）、Brief 开关（2.5）、三维与二维分工（2.4）。</li>
+  </ul>
+  </div>
+  <div class="keep">
+  <h3>4.2 公司放大面内容瘦身（#133，信息部 + UI designer）</h3>
+  <ul>
+    <li>放大面只服务三件事：认人、认链位、认偿债节奏。</li>
+    <li>三区排布：A 身份与链位（名称、ticker、层）→ B 债务图（无数据则占位）→ C 规模与有则显示的字段（行业坐标、主业占比、上市地等）。</li>
+    <li>移出：<code>(s, x, y)</code> 坐标、环分、source 等内部字段。</li>
+    <li><strong>状态：待业主决定是否实现。</strong></li>
+  </ul>
+  </div>
+
+  <!-- 5 发布记录 -->
+  <h2 class="page">5. 发布记录</h2>
+  <table class="long">
+    <tr><th>提交</th><th>日期</th><th>内容</th><th>条目</th></tr>
+    <tr><td><code>c0d96ab</code></td><td>10-06</td><td>首次启动自动造库，克隆后首页有公司</td><td>#110</td></tr>
+    <tr><td><code>9641ed0</code></td><td>10-06</td><td>跟踪子代理链接与秘书 skill（随后被 <code>950d7e6</code> 停跟踪）</td><td>#109–#110</td></tr>
+    <tr><td><code>950d7e6</code></td><td>10-07</td><td>公私隔离：协议进仓、私有文件停跟踪；子代理手册 HTML/PDF</td><td>#111–#114</td></tr>
+    <tr><td><code>72debbd</code></td><td>10-08</td><td>公司放大聚焦、Demo Company 债务表、债务曲线图</td><td>#121–#125</td></tr>
+    <tr><td><code>62e264b</code></td><td>10-10</td><td>二维才开放大面（三维交互策略）、Brief 名单开关</td><td>#128、#135–#137</td></tr>
+    <tr><td><code>484a457</code></td><td>10-10</td><td>只留方向键平移；搜索跳标准视角</td><td>#140、#142–#143</td></tr>
+    <tr><td><code>6c562a0</code></td><td>10-12</td><td>恢复字母快捷键；输入时禁用</td><td>#146–#147</td></tr>
+  </table>
+  <p class="note">日志类提交（<code>1310212</code>、<code>152ac4c</code>、<code>e2fd9ec</code>、<code>ce2c3ea</code>、<code>d98f289</code>）只补记 worklog，未列入上表。<code>62e264b</code> 首次 push 因 github.com:443 连不上失败，#137 重试成功；<code>484a457</code> 首次 push 被自动审查拦截，业主批准后成功。</p>
+
+  <!-- 附 索引 -->
+  <h2>附：条目索引 #110–#148</h2>
+  <table class="long">
+    <tr><th>#</th><th>类别</th><th>一句话</th></tr>
+    <tr><td class="n">110</td><td>产品</td><td>验证子代理；修克隆后空名单，首次启动自动造库</td></tr>
+    <tr><td class="n">111</td><td>文稿</td><td>子代理使用手册 PDF</td></tr>
+    <tr><td class="n">112</td><td>工作流</td><td>公私隔离协议；中文回复规则</td></tr>
+    <tr><td class="n">113</td><td>工作流</td><td>建 <code>progress.md</code>；查明 #112 的 push 未发生</td></tr>
+    <tr><td class="n">114</td><td>发布</td><td>push <code>950d7e6</code></td></tr>
+    <tr><td class="n">115</td><td>工作流</td><td><code>progress.md</code> 改为仅业主下令才更新</td></tr>
+    <tr><td class="n">116</td><td>检查</td><td>查未 push 内容，只查不推</td></tr>
+    <tr><td class="n">117</td><td>工作流</td><td>新设 UI designer</td></tr>
+    <tr><td class="n">118</td><td>建议</td><td>立方体信息展示整体改版建议</td></tr>
+    <tr><td class="n">119</td><td>工作流</td><td>新设 prompt writer</td></tr>
+    <tr><td class="n">120</td><td>需求稿</td><td>启动展示页；写公司放大交互 prompt</td></tr>
+    <tr><td class="n">121</td><td>产品</td><td>实现公司放大聚焦</td></tr>
+    <tr><td class="n">122</td><td>需求稿</td><td>Demo Company 与债务表 prompt</td></tr>
+    <tr><td class="n">123</td><td>产品</td><td>Demo Company 与 30 年债务表入库</td></tr>
+    <tr><td class="n">124</td><td>产品</td><td>放大面底部债务曲线图</td></tr>
+    <tr><td class="n">125</td><td>发布</td><td>push <code>72debbd</code></td></tr>
+    <tr><td class="n">126</td><td>工作流</td><td><code>progress.md</code> 改为首次或点名才读</td></tr>
+    <tr><td class="n">127</td><td>需求稿</td><td>三维与二维交互策略 prompt</td></tr>
+    <tr><td class="n">128</td><td>产品</td><td>实现同页三维交互策略</td></tr>
+    <tr><td class="n">129</td><td>产品</td><td>独立 <code>/slice</code> 二维页（后回滚）</td></tr>
+    <tr><td class="n">130</td><td>产品</td><td>回滚 <code>/slice</code>，保留同页策略</td></tr>
+    <tr><td class="n">131</td><td>检查</td><td>打开展示页供业主检验</td></tr>
+    <tr><td class="n">132</td><td>工作流</td><td>更新 progress，报告未提交状态</td></tr>
+    <tr><td class="n">133</td><td>建议</td><td>公司放大面内容瘦身（待决）</td></tr>
+    <tr><td class="n">134</td><td>需求稿</td><td>Brief 开关 prompt</td></tr>
+    <tr><td class="n">135</td><td>产品</td><td>实现 Brief 开关</td></tr>
+    <tr><td class="n">136</td><td>发布</td><td>提交 <code>62e264b</code>，push 失败</td></tr>
+    <tr><td class="n">137</td><td>发布</td><td>重试 push 成功</td></tr>
+    <tr><td class="n">138</td><td>需求稿</td><td>删 WASD prompt</td></tr>
+    <tr><td class="n">139</td><td>需求稿</td><td>追加删 Q/E、R/F、C</td></tr>
+    <tr><td class="n">140</td><td>产品</td><td>删字母快捷键，只留方向键</td></tr>
+    <tr><td class="n">141</td><td>需求稿</td><td>搜索跳标准视角 prompt</td></tr>
+    <tr><td class="n">142</td><td>产品</td><td>实现搜索跳标准视角</td></tr>
+    <tr><td class="n">143</td><td>发布</td><td>push <code>484a457</code>；更新 progress</td></tr>
+    <tr><td class="n">144</td><td>需求稿</td><td>恢复字母键并加输入守卫 prompt</td></tr>
+    <tr><td class="n">145</td><td>需求稿</td><td>定稿：全恢复，输入时全部键控关闭</td></tr>
+    <tr><td class="n">146</td><td>产品</td><td>实现恢复字母键与输入守卫</td></tr>
+    <tr><td class="n">147</td><td>发布</td><td>push <code>6c562a0</code></td></tr>
+    <tr><td class="n">148</td><td>发布</td><td>补交 worklog 并 push</td></tr>
+  </table>
+
+  <p class="foot">FIDV · 改动纪要 · 2026-10-12 · 依据 worklog 与 git 记录；原文见 <code>library/worklog-003.md</code> 至 <code>worklog-005.md</code>。</p>
+</body>
+</html>

@@ -15,6 +15,10 @@
 
 - [`FIDV-subagent-handbook.html`](./FIDV-subagent-handbook.html) A4 纵向打印；PDF `library/showable-report/FIDV-subagent-handbook.pdf`
 
+改动纪要（2026-10-12，worklog #110–#148）：
+
+- [`FIDV-changes-since-109-report.html`](./FIDV-changes-since-109-report.html) A4 纵向打印；PDF `library/showable-report/FIDV-changes-since-109-report.pdf`
+
 队员会讲稿（2026-10-06）：
 
 - [`FIDV-team-briefing.html`](./FIDV-team-briefing.html) A4 横向打印；配图 `briefing/assets/`
